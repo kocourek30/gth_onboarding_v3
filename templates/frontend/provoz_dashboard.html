@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard provozu | Onboarding GTH{% endblock %}
+
+{% block content %}
+<style>
+  .provoz-layout {
+    min-height: calc(100vh - 120px);
+  }
+  .provoz-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .provoz-menu .btn {
+    text-align: left;
+    font-size: 0.9rem;
+    padding: 0.38rem 0.75rem;
+    border-radius: 999px;
+  }
+  .provoz-menu .btn-main {
+    background-color: var(--gth-green);
+    border-color: var(--gth-green);
+    color: #fff;
+  }
+  .provoz-menu .btn-main:hover {
+    background-color: var(--gth-green-dark);
+    border-color: var(--gth-green-dark);
+    color: #fff;
+  }
+  .provoz-menu .btn-secondary {
+    background-color: transparent;
+    border-color: rgba(0,0,0,0.08);
+    color: #555;
+  }
+  .provoz-menu .btn-secondary:hover {
+    background-color: #f3f6ef;
+    border-color: rgba(0,0,0,0.12);
+    color: #111;
+  }
+</style>
+
+<div class="row g-3 mt-2 provoz-layout">
+  <!-- Levé menu -->
+  <div class="col-12 col-md-3">
+    <div class="provoz-menu">
+      <a href="{% url 'frontend:provoz_dashboard' %}" class="btn btn-main">
+        Dashboard provozu
+      </a>
+      <a href="#moje-provozy" class="btn btn-secondary">
+        Moje provozy
+      </a>
+    </div>
+  </div>
+
+  <!-- Pravý obsah -->
+  <div class="col-12 col-md-9">
+    <!-- Start dotazníku -->
+    <div class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h5 class="mb-1">Založit nový osobní dotazník</h5>
+        <p class="mb-0">Vyberte provoz a pozici, pro kterou dotazník zakládáte.</p>
+      </div>
+      <div class="gth-card-body py-3">
+        <form class="row g-2 align-items-end" method="post">
+          {% csrf_token %}
+          <div class="col-12 col-md-5">
+            <label class="form-label mb-1" for="id_provoz">Provoz</label>
+            {{ start_form.provoz }}
+          </div>
+          <div class="col-12 col-md-5">
+            <label class="form-label mb-1" for="id_pozice">Pozice</label>
+            {{ start_form.pozice }}
+          </div>
+          <div class="col-12 col-md-2 d-grid">
+            <button type="submit"
+                    class="btn btn-primary btn-sm mt-3 mt-md-0"
+                    {% if not moje_provozy %}disabled{% endif %}>
+              Začít dotazník
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Rozpracované dotazníky -->
+    <div class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">Rozpracované osobní dotazníky</h6>
+      </div>
+      <div class="gth-card-body py-3">
+        {% if dotazniky_rozpracovane %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Jméno</th>
+                  <th scope="col">Provoz</th>
+                  <th scope="col">Pozice</th>
+                  <th scope="col">Vytvořeno</th>
+                  <th scope="col">Akce</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in dotazniky_rozpracovane %}
+                  <tr>
+                    <td>{{ d.id }}</td>
+                    <td>{{ d.jmeno }} {{ d.prijmeni }}</td>
+                    <td>{{ d.provoz }}</td>
+                    <td>{{ d.pozice }}</td>
+                    <td>{{ d.created_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+  <a href="{% url 'frontend:dotaznik_edit' d.id %}"
+     class="btn btn-sm btn-outline-primary me-1">
+    Pokračovat
+  </a>
+<a href="{% url 'frontend:dotaznik_kontrola' d.id %}"
+       class="btn btn-sm btn-outline-secondary me-1">
+      Kontrola a odeslání
+    </a>
+  <form method="post"
+        action="{% url 'frontend:dotaznik_delete' d.id %}"
+        style="display:inline;">
+    {% csrf_token %}
+    <button type="submit"
+            class="btn btn-sm btn-outline-danger"
+            onclick="return confirm('Opravdu smazat tento dotazník?');">
+      Smazat
+    </button>
+  </form>
+</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted mb-0 small">
+            Zatím nemáte žádné rozpracované dotazníky.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Odeslané dotazníky -->
+<div class="card gth-card mb-3">
+  <div class="gth-card-header py-2">
+    <h6 class="mb-0">Odeslané osobní dotazníky</h6>
+  </div>
+  <div class="gth-card-body py-3">
+    {% if dotazniky_odeslane %}
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Jméno</th>
+              <th scope="col">Provoz</th>
+              <th scope="col">Pozice</th>
+              <th scope="col">Stav</th>
+              <th scope="col">Naposledy změněno</th>
+              <th scope="col">Akce</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in dotazniky_odeslane %}
+              <tr>
+                <td>{{ d.id }}</td>
+                <td>{{ d.jmeno }} {{ d.prijmeni }}</td>
+                <td>{{ d.provoz }}</td>
+                <td>{{ d.pozice }}</td>
+                <td>{{ d.get_stav_display }}</td>
+                <td>{{ d.updated_at|date:"d.m.Y H:i" }}</td>
+                <td>
+                  <a href="{% url 'frontend:dotaznik_detail_provoz' d.id %}"
+                     class="btn btn-sm btn-outline-secondary">
+                    Zobrazit
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0 small">
+        Zatím nemáte žádné dotazníky odeslané na HR.
+      </p>
+    {% endif %}
+  </div>
+</div>
+
+
+    <!-- Moje provozy -->
+    <div id="moje-provozy" class="card gth-card">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">Moje provozy</h6>
+      </div>
+      <div class="gth-card-body py-3">
+        {% if moje_provozy %}
+          <p class="text-muted small mb-2">
+            Provozy, které máte přiřazené ve svém profilu.
+          </p>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Název</th>
+                  <th scope="col">Město</th>
+                  <th scope="col">Kraj</th>
+                  <th scope="col">Manažer</th>
+                  <th scope="col">Akce</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for provoz in moje_provozy %}
+                  <tr>
+                    <td>{{ provoz.cislo_provozu }}</td>
+                    <td>{{ provoz.nazev }}</td>
+                    <td>{{ provoz.mesto }}</td>
+                    <td>{{ provoz.kraj }}</td>
+                    <td>{{ provoz.manazer|default:"" }}</td>
+                    <td>
+                      <span class="text-muted small">
+                        Použijte formulář nahoře
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="alert alert-info mb-0">
+            Nemáte přiřazen žádný provoz. Pokud je to chyba, obraťte se na IT nebo HR.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

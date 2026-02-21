@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-3">
+    <h1>Nový osobní dotazník – {{ provoz.nazev }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">Vytvořit dotazník</button>
+        <a href="{% url 'frontend_provozdashboard' %}" class="btn btn-secondary">Zpět</a>
+    </form>
+</div>
+{% endblock %}

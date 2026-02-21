@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}Osobní dotazník | Onboarding GTH{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+  <h1 class="h3 mb-2">
+    <i class="fa fa-id-card me-2"></i>Osobní dotazník
+  </h1>
+  <p class="text-muted mb-3">
+    <i class="fa fa-building me-1"></i> Provoz: {{ dotaznik.provoz }}
+    &nbsp;|&nbsp;
+    <i class="fa fa-briefcase me-1"></i> Pozice: {{ dotaznik.pozice }}
+  </p>
+
+  <!-- Sekční navigace -->
+  <ul class="nav nav-pills mb-3 small">
+    <li class="nav-item">
+      <a class="nav-link active" href="#osobni-udaje">
+        <i class="fa fa-user me-1"></i> Osobní údaje
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#banka">
+        <i class="fa fa-university me-1"></i> Bankovní spojení
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#adresy">
+        <i class="fa fa-home me-1"></i> Adresy
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#duchod">
+        <i class="fa fa-wheelchair me-1"></i> Důchod
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#vzdelani">
+        <i class="fa fa-graduation-cap me-1"></i> Vzdělání
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#zamestnavatel">
+        <i class="fa fa-building-o me-1"></i> Poslední zaměstnavatel
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#cizinec">
+        <i class="fa fa-globe me-1"></i> Cizinec & pojištění
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#srazky">
+        <i class="fa fa-balance-scale me-1"></i> Srážky & vyživované osoby
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#dalsi">
+        <i class="fa fa-info-circle me-1"></i> Další údaje
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#prilohy">
+        <i class="fa fa-paperclip me-1"></i> Přílohy
+      </a>
+    </li>
+  </ul>
+
+  <!-- Formulář -->
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Osobní údaje -->
+    <div id="osobni-udaje" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-user me-1"></i> Osobní údaje
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <div class="row g-2">
+          <div class="col-12 col-md-2">
+            {{ form.titul.label_tag }}{{ form.titul }}
+          </div>
+          <div class="col-12 col-md-5">
+            {{ form.jmeno.label_tag }}{{ form.jmeno }}
+          </div>
+          <div class="col-12 col-md-5">
+            {{ form.prijmeni.label_tag }}{{ form.prijmeni }}
+          </div>
+
+          <div class="col-12">
+            {{ form.rodna_prijmeni.label_tag }}{{ form.rodna_prijmeni }}
+          </div>
+
+          <div class="col-12 col-md-4">
+            {{ form.rodne_cislo.label_tag }}{{ form.rodne_cislo }}
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.datum_narozeni.label_tag }}{{ form.datum_narozeni }}
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.misto_narozeni.label_tag }}{{ form.misto_narozeni }}
+          </div>
+
+          <div class="col-12 col-md-6">
+            {{ form.statni_obcanstvi.label_tag }}{{ form.statni_obcanstvi }}
+          </div>
+          <div class="col-12 col-md-6">
+            {{ form.rodinny_stav.label_tag }}{{ form.rodinny_stav }}
+          </div>
+
+          <div class="col-12 col-md-6">
+            {{ form.telefon.label_tag }}{{ form.telefon }}
+          </div>
+          <div class="col-12 col-md-6">
+            {{ form.email.label_tag }}{{ form.email }}
+          </div>
+
+          <div class="col-12 col-md-6">
+            {{ form.zdravotni_pojistovna.label_tag }}{{ form.zdravotni_pojistovna }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bankovní spojení -->
+    <div id="banka" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-university me-1"></i> Bankovní spojení
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <div class="row g-2">
+          <div class="col-12 col-md-4">
+            {{ form.cislo_uctu.label_tag }}{{ form.cislo_uctu }}
+          </div>
+          <div class="col-12 col-md-3">
+            {{ form.kod_banky.label_tag }}{{ form.kod_banky }}
+          </div>
+          <div class="col-12 col-md-5">
+            {{ form.nazev_banky.label_tag }}{{ form.nazev_banky }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Adresy -->
+    <div id="adresy" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-home me-1"></i> Adresy
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <h6 class="small text-muted">Trvalé bydliště</h6>
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-6">
+            {{ form.trvale_ulice.label_tag }}{{ form.trvale_ulice }}
+          </div>
+          <div class="col-12 col-md-3">
+            {{ form.trvale_cislo_popisne.label_tag }}{{ form.trvale_cislo_popisne }}
+          </div>
+          <div class="col-12 col-md-2">
+            {{ form.trvale_psc.label_tag }}{{ form.trvale_psc }}
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.trvale_mesto.label_tag }}{{ form.trvale_mesto }}
+          </div>
+        </div>
+
+        <h6 class="small text-muted mt-3">Doručovací adresa</h6>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="id_dorucovaci_jina">
+          <label class="form-check-label small" for="id_dorucovaci_jina">
+            Doručovací adresa je jiná než trvalé bydliště
+          </label>
+        </div>
+
+        <div class="row g-2" id="dorucovaci-fields">
+          <div class="col-12 col-md-6">
+            {{ form.dorucovaci_ulice.label_tag }}{{ form.dorucovaci_ulice }}
+          </div>
+          <div class="col-12 col-md-3">
+            {{ form.dorucovaci_cislo_popisne.label_tag }}{{ form.dorucovaci_cislo_popisne }}
+          </div>
+          <div class="col-12 col-md-2">
+            {{ form.dorucovaci_psc.label_tag }}{{ form.dorucovaci_psc }}
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.dorucovaci_mesto.label_tag }}{{ form.dorucovaci_mesto }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Důchod -->
+    <div id="duchod" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-wheelchair me-1"></i> Informace o pobírání důchodu
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.duchod_predcasny }} {{ form.duchod_predcasny.label_tag }}
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.duchod_starobni }} {{ form.duchod_starobni.label_tag }}
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.duchod_invalidni }} {{ form.duchod_invalidni.label_tag }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-12 col-md-4">
+            {{ form.duchod_datum_vzniku.label_tag }}{{ form.duchod_datum_vzniku }}
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.duchod_kdo_vyplaci.label_tag }}{{ form.duchod_kdo_vyplaci }}
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.duchod_kdo_dopl_info.label_tag }}{{ form.duchod_kdo_dopl_info }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vzdělání -->
+    <div id="vzdelani" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-graduation-cap me-1"></i> Vzdělání
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <div class="row g-2 mb-2">
+          <div class="col-6 col-md-4">
+            <div class="form-check">
+              {{ form.vzdelani_zakladni }} {{ form.vzdelani_zakladni.label_tag }}
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="form-check">
+              {{ form.vzdelani_sou }} {{ form.vzdelani_sou.label_tag }}
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="form-check">
+              {{ form.vzdelani_ss }} {{ form.vzdelani_ss.label_tag }}
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="form-check">
+              {{ form.vzdelani_gymnazium }} {{ form.vzdelani_gymnazium.label_tag }}
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="form-check">
+              {{ form.vzdelani_vs }} {{ form.vzdelani_vs.label_tag }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-6">
+            {{ form.vzdelani_misto_studia.label_tag }}{{ form.vzdelani_misto_studia }}
+          </div>
+          <div class="col-12 col-md-3">
+            {{ form.vzdelani_cr_zahranici.label_tag }}{{ form.vzdelani_cr_zahranici }}
+          </div>
+          <div class="col-12 col-md-3">
+            {{ form.vzdelani_rok_ukonceni.label_tag }}{{ form.vzdelani_rok_ukonceni }}
+          </div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-6">
+            {{ form.vzdelani_mesto_obec.label_tag }}{{ form.vzdelani_mesto_obec }}
+          </div>
+          <div class="col-12 col-md-6">
+            {{ form.vzdelani_skola_nazev.label_tag }}{{ form.vzdelani_skola_nazev }}
+          </div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-6">
+            {{ form.vzdelani_obor.label_tag }}{{ form.vzdelani_obor }}
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="row g-2">
+              <div class="col-4">
+                <div class="form-check">
+                  {{ form.vzdelani_zakonceno_vyucni_list }} {{ form.vzdelani_zakonceno_vyucni_list.label_tag }}
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-check">
+                  {{ form.vzdelani_zakonceno_maturita }} {{ form.vzdelani_zakonceno_maturita.label_tag }}
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-check">
+                  {{ form.vzdelani_zakonceno_diplom }} {{ form.vzdelani_zakonceno_diplom.label_tag }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Poslední zaměstnavatel -->
+    <div id="zamestnavatel" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-building-o me-1"></i> Poslední zaměstnavatel
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <div class="row g-2">
+          <div class="col-12 col-md-6">
+            {{ form.posledni_zam_nazev_firmy.label_tag }}{{ form.posledni_zam_nazev_firmy }}
+          </div>
+          <div class="col-12 col-md-6">
+            {{ form.posledni_zam_pracovni_zarazeni.label_tag }}{{ form.posledni_zam_pracovni_zarazeni }}
+          </div>
+          <div class="col-6 col-md-3">
+            {{ form.posledni_zam_od.label_tag }}{{ form.posledni_zam_od }}
+          </div>
+          <div class="col-6 col-md-3">
+            {{ form.posledni_zam_do.label_tag }}{{ form.posledni_zam_do }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cizinec & pojištění -->
+    <div id="cizinec" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-globe me-1"></i> Údaje pro cizince a pojištění v cizině
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <h6 class="small text-muted">Cizinec</h6>
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-4">
+            {{ form.cizinec_cislo_dokladu.label_tag }}{{ form.cizinec_cislo_dokladu }}
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.cizinec_povoleni_prace.label_tag }}{{ form.cizinec_povoleni_prace }}
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.cizinec_povoleni_pobytu.label_tag }}{{ form.cizinec_povoleni_pobytu }}
+          </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-12 col-md-6">
+            {{ form.cizinec_adresa_ulice.label_tag }}{{ form.cizinec_adresa_ulice }}
+          </div>
+          <div class="col-6 col-md-3">
+            {{ form.cizinec_adresa_cislo.label_tag }}{{ form.cizinec_adresa_cislo }}
+          </div>
+          <div class="col-6 col-md-3">
+            {{ form.cizinec_adresa_psc.label_tag }}{{ form.cizinec_adresa_psc }}
+          </div>
+          <div class="col-12 col-md-6">
+            {{ form.cizinec_adresa_stat_mesto.label_tag }}{{ form.cizinec_adresa_stat_mesto }}
+          </div>
+        </div>
+
+        <h6 class="small text-muted">Pojištění v cizině</h6>
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.pojisteni_cizina_byl }} {{ form.pojisteni_cizina_byl.label_tag }}
+            </div>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-12 col-md-6">
+            {{ form.pojisteni_cizina_nazev_adresa_nositele.label_tag }}{{ form.pojisteni_cizina_nazev_adresa_nositele }}
+          </div>
+          <div class="col-12 col-md-6">
+            {{ form.pojisteni_cizina_cislo_pojisteni.label_tag }}{{ form.pojisteni_cizina_cislo_pojisteni }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Srážky & vyživované osoby -->
+    <div id="srazky" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-balance-scale me-1"></i> Srážky ze mzdy a vyživované osoby
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.srazky_existuji }} {{ form.srazky_existuji.label_tag }}
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            {{ form.pocet_vyzivovanych_osob.label_tag }}{{ form.pocet_vyzivovanych_osob }}
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-12">
+            {{ form.srazky_vymahajici_orgam_a_cj.label_tag }}{{ form.srazky_vymahajici_orgam_a_cj }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Další údaje -->
+    <div id="dalsi" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
+        <h6 class="mb-0">
+          <i class="fa fa-info-circle me-1"></i> Další údaje
+        </h6>
+      </div>
+      <div class="gth-card-body py-3">
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.zmenena_prac_schopnost }} {{ form.zmenena_prac_schopnost.label_tag }}
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.vedeni_v_evidenci_up }} {{ form.vedeni_v_evidenci_up.label_tag }}
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.jiny_pracovni_pomer }} {{ form.jiny_pracovni_pomer.label_tag }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.je_osvc }} {{ form.je_osvc.label_tag }}
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.zapoctovy_list_predlozen }} {{ form.zapoctovy_list_predlozen.label_tag }}
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-check">
+              {{ form.cisty_trestni_rejstrik }} {{ form.cisty_trestni_rejstrik.label_tag }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-12">
+            {{ form.jine_poznamky.label_tag }}{{ form.jine_poznamky }}
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <button class="btn btn-primary" type="submit" name="ulozit_dotaznik">
+            <i class="fa fa-save me-1"></i> Uložit
+          </button>
+          <a href="{% url 'frontend:provoz_dashboard' %}" class="btn btn-secondary">
+            <i class="fa fa-arrow-left me-1"></i> Zpět na dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Přílohy -->
+    <div id="prilohy" class="card gth-card mb-3">
+      <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+          <i class="fa fa-paperclip me-1"></i> Přílohy
+        </h6>
+        <small class="text-muted">
+          Přiložte např. občanský průkaz, potvrzení a další dokumenty
+        </small>
+      </div>
+      <div class="gth-card-body py-3">
+        {% if dotaznik.prilohy.all %}
+  <div class="mb-3">
+    <h6 class="small text-muted mb-1">Nahrané soubory</h6>
+    <ul class="list-group list-group-sm">
+      {% for p in dotaznik.prilohy.all %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span>
+            <i class="fa fa-file-o me-1"></i>
+            {{ p.popis|default:p.soubor.name }}
+          </span>
+          <div class="btn-group btn-group-sm" role="group">
+            <a href="{{ p.soubor.url }}" target="_blank"
+               class="btn btn-outline-secondary">
+              <i class="fa fa-download me-1"></i> Otevřít
+            </a>
+            <form method="post"
+                  action="{% url 'frontend:priloha_delete' p.id %}"
+                  style="display:inline;">
+              {% csrf_token %}
+              <button type="submit"
+                      class="btn btn-outline-danger"
+                      onclick="return confirm('Opravdu smazat tuto přílohu?');">
+                <i class="fa fa-trash-o me-1"></i> Smazat
+              </button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+
+        <div class="border rounded p-2 bg-light">
+          <h6 class="small text-muted mb-2">
+            <i class="fa fa-plus-circle me-1"></i> Přidat novou přílohu
+          </h6>
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-5">
+              {{ priloha_form.soubor.label_tag }}{{ priloha_form.soubor }}
+            </div>
+            <div class="col-12 col-md-5">
+              {{ priloha_form.popis.label_tag }}{{ priloha_form.popis }}
+            </div>
+            <div class="col-12 col-md-2 d-grid">
+              <button type="submit"
+                      name="pridat_prilohu"
+                      value="1"
+                      class="btn btn-outline-primary btn-sm">
+                <i class="fa fa-upload me-1"></i> Nahrát
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  (function() {
+    const checkbox = document.getElementById("id_dorucovaci_jina");
+    const fields = document.querySelectorAll("#dorucovaci-fields input");
+
+    function updateDorucovaci() {
+      const enabled = checkbox.checked;
+      fields.forEach((el) => {
+        el.disabled = !enabled;
+        if (!enabled) {
+          el.value = "";
+        }
+      });
+    }
+
+    if (checkbox) {
+      updateDorucovaci();
+      checkbox.addEventListener("change", updateDorucovaci);
+    }
+  })();
+</script>
+{% endblock %}

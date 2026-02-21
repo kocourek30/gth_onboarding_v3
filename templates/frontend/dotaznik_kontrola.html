@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Kontrola osobního dotazníku | Onboarding GTH{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+  <h1>Kontrola osobního dotazníku</h1>
+  <p class="text-muted">
+    Provoz: {{ dotaznik.provoz }} | Pozice: {{ dotaznik.pozice }}
+  </p>
+
+  <dl class="row">
+    <dt class="col-sm-3">Jméno</dt>
+    <dd class="col-sm-9">{{ dotaznik.titul }} {{ dotaznik.jmeno }} {{ dotaznik.prijmeni }}</dd>
+
+    <dt class="col-sm-3">Rodné číslo</dt>
+    <dd class="col-sm-9">{{ dotaznik.rodne_cislo }}</dd>
+
+    <dt class="col-sm-3">Datum narození</dt>
+    <dd class="col-sm-9">{{ dotaznik.datum_narozeni|date:"d.m.Y" }}</dd>
+
+    <dt class="col-sm-3">Místo narození</dt>
+    <dd class="col-sm-9">{{ dotaznik.misto_narozeni }}</dd>
+
+    <!-- sem si postupně doplníš další skupiny polí podle potřeby -->
+  </dl>
+
+  <form method="post" action="{% url 'frontend:dotaznik_odeslat_hr' dotaznik.id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">
+      Odeslat na personální oddělení
+    </button>
+    <a href="{% url 'frontend:dotaznik_edit' dotaznik.id %}" class="btn btn-secondary">
+      Zpět k úpravě
+    </a>
+    <a href="{% url 'frontend:provoz_dashboard' %}" class="btn btn-link">
+      Zpět na dashboard
+    </a>
+  </form>
+</div>
+{% endblock %}
