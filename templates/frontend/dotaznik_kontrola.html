@@ -4,34 +4,406 @@
 
 {% block content %}
 <div class="container py-3">
-  <h1>Kontrola osobního dotazníku</h1>
-  <p class="text-muted">
-    Provoz: {{ dotaznik.provoz }} | Pozice: {{ dotaznik.pozice }}
+  <h1 class="h3 mb-2">
+    <i class="fa fa-check-circle-o me-2"></i>Kontrola osobního dotazníku
+  </h1>
+  <p class="text-muted mb-3">
+    <i class="fa fa-building me-1"></i> Provoz: {{ dotaznik.provoz }}
+    &nbsp;|&nbsp;
+    <i class="fa fa-briefcase me-1"></i> Pozice: {{ dotaznik.pozice|default:"(zatím nevyplněno)" }}
+    &nbsp;|&nbsp;
+    <i class="fa fa-id-badge me-1"></i> Stav: {{ dotaznik.get_stav_display }}
   </p>
 
-  <dl class="row">
-    <dt class="col-sm-3">Jméno</dt>
-    <dd class="col-sm-9">{{ dotaznik.titul }} {{ dotaznik.jmeno }} {{ dotaznik.prijmeni }}</dd>
+  <!-- Osobní údaje -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2">
+      <h6 class="mb-0">
+        <i class="fa fa-user me-1"></i> Osobní údaje
+      </h6>
+    </div>
+    <div class="gth-card-body py-3">
+      <dl class="row mb-0 small">
+        <dt class="col-sm-3">Jméno a příjmení</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.titul }} {{ dotaznik.jmeno }} {{ dotaznik.prijmeni }}
+        </dd>
 
-    <dt class="col-sm-3">Rodné číslo</dt>
-    <dd class="col-sm-9">{{ dotaznik.rodne_cislo }}</dd>
+        <dt class="col-sm-3">Rodné a dřívější příjmení</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.rodna_prijmeni|default:"—" }}
+        </dd>
 
-    <dt class="col-sm-3">Datum narození</dt>
-    <dd class="col-sm-9">{{ dotaznik.datum_narozeni|date:"d.m.Y" }}</dd>
+        <dt class="col-sm-3">Rodné číslo</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.rodne_cislo }}
+        </dd>
 
-    <dt class="col-sm-3">Místo narození</dt>
-    <dd class="col-sm-9">{{ dotaznik.misto_narozeni }}</dd>
+        <dt class="col-sm-3">Datum narození</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.datum_narozeni|date:"d.m.Y" }}
+        </dd>
 
-    <!-- sem si postupně doplníš další skupiny polí podle potřeby -->
-  </dl>
+        <dt class="col-sm-3">Místo narození</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.misto_narozeni }}
+        </dd>
 
-  <form method="post" action="{% url 'frontend:dotaznik_odeslat_hr' dotaznik.id %}">
+        <dt class="col-sm-3">Státní občanství</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.statni_obcanstvi }}
+        </dd>
+
+        <dt class="col-sm-3">Rodinný stav</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.rodinny_stav|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Telefon</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.telefon|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">E‑mail</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.email|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Zdravotní pojišťovna</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.zdravotni_pojistovna }}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Bankovní spojení -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2">
+      <h6 class="mb-0">
+        <i class="fa fa-university me-1"></i> Bankovní spojení
+      </h6>
+    </div>
+    <div class="gth-card-body py-3">
+      <dl class="row mb-0 small">
+        <dt class="col-sm-3">Číslo účtu</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.cislo_uctu }}
+        </dd>
+
+        <dt class="col-sm-3">Kód banky</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.kod_banky }}
+        </dd>
+
+        <dt class="col-sm-3">Název banky</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.nazev_banky|default:"—" }}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Adresy -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2">
+      <h6 class="mb-0">
+        <i class="fa fa-home me-1"></i> Adresy
+      </h6>
+    </div>
+    <div class="gth-card-body py-3 small">
+      <h6 class="small text-muted">Trvalé bydliště</h6>
+      <dl class="row mb-2">
+        <dt class="col-sm-3">Ulice</dt>
+        <dd class="col-sm-9">{{ dotaznik.trvale_ulice }}</dd>
+
+        <dt class="col-sm-3">Číslo popisné</dt>
+        <dd class="col-sm-9">{{ dotaznik.trvale_cislo_popisne }}</dd>
+
+        <dt class="col-sm-3">Město / obec</dt>
+        <dd class="col-sm-9">{{ dotaznik.trvale_mesto }}</dd>
+
+        <dt class="col-sm-3">PSČ</dt>
+        <dd class="col-sm-9">{{ dotaznik.trvale_psc }}</dd>
+      </dl>
+
+      <h6 class="small text-muted mt-2">Doručovací adresa</h6>
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Ulice</dt>
+        <dd class="col-sm-9">{{ dotaznik.dorucovaci_ulice|default:"(stejná jako trvalá)" }}</dd>
+
+        <dt class="col-sm-3">Číslo popisné</dt>
+        <dd class="col-sm-9">{{ dotaznik.dorucovaci_cislo_popisne|default:"(stejná jako trvalá)" }}</dd>
+
+        <dt class="col-sm-3">Město / obec</dt>
+        <dd class="col-sm-9">{{ dotaznik.dorucovaci_mesto|default:"(stejné jako trvalé)" }}</dd>
+
+        <dt class="col-sm-3">PSČ</dt>
+        <dd class="col-sm-9">{{ dotaznik.dorucovaci_psc|default:"(stejné jako trvalé)" }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Důchod -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2">
+      <h6 class="mb-0">
+        <i class="fa fa-wheelchair me-1"></i> Informace o pobírání důchodu
+      </h6>
+    </div>
+    <div class="gth-card-body py-3 small">
+      <dl class="row mb-2">
+        <dt class="col-sm-3">Typ důchodu</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.duchod_predcasny or dotaznik.duchod_starobni or dotaznik.duchod_invalidni %}
+            {% if dotaznik.duchod_predcasny %}Předčasný{% endif %}
+            {% if dotaznik.duchod_starobni %}{% if dotaznik.duchod_predcasny %}, {% endif %}Starobní{% endif %}
+            {% if dotaznik.duchod_invalidni %}{% if dotaznik.duchod_predcasny or dotaznik.duchod_starobni %}, {% endif %}Invalidní{% endif %}
+          {% else %}
+            Nepobírá důchod
+          {% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Datum vzniku nároku</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.duchod_datum_vzniku|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Kdo důchod vyplácí</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.duchod_kdo_vyplaci|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Další info</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.duchod_kdo_dopl_info|default:"—" }}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Vzdělání -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2">
+      <h6 class="mb-0">
+        <i class="fa fa-graduation-cap me-1"></i> Vzdělání
+      </h6>
+    </div>
+    <div class="gth-card-body py-3 small">
+      <dl class="row mb-2">
+        <dt class="col-sm-3">Úroveň vzdělání</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.vzdelani_zakladni %}Základní{% endif %}
+          {% if dotaznik.vzdelani_sou %}{% if dotaznik.vzdelani_zakladni %}, {% endif %}SOU{% endif %}
+          {% if dotaznik.vzdelani_ss %}{% if dotaznik.vzdelani_zakladni or dotaznik.vzdelani_sou %}, {% endif %}Střední škola{% endif %}
+          {% if dotaznik.vzdelani_gymnazium %}{% if dotaznik.vzdelani_zakladni or dotaznik.vzdelani_sou or dotaznik.vzdelani_ss %}, {% endif %}Gymnázium{% endif %}
+          {% if dotaznik.vzdelani_vs %}{% if dotaznik.vzdelani_zakladni or dotaznik.vzdelani_sou or dotaznik.vzdelani_ss or dotaznik.vzdelani_gymnazium %}, {% endif %}Vysoká škola{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Škola a obor</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.vzdelani_skola_nazev|default:"—" }}{% if dotaznik.vzdelani_obor %}, {{ dotaznik.vzdelani_obor }}{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Místo studia</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.vzdelani_misto_studia|default:"—" }}
+          {% if dotaznik.vzdelani_mesto_obec %}
+            ({{ dotaznik.vzdelani_mesto_obec }})
+          {% endif %}
+        </dd>
+
+        <dt class="col-sm-3">ČR / zahraničí</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.vzdelani_cr_zahranici|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Rok ukončení</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.vzdelani_rok_ukonceni|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Zakončení</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.vzdelani_zakonceno_vyucni_list or dotaznik.vzdelani_zakonceno_maturita or dotaznik.vzdelani_zakonceno_diplom %}
+            {% if dotaznik.vzdelani_zakonceno_vyucni_list %}Výuční list{% endif %}
+            {% if dotaznik.vzdelani_zakonceno_maturita %}{% if dotaznik.vzdelani_zakonceno_vyucni_list %}, {% endif %}Maturita{% endif %}
+            {% if dotaznik.vzdelani_zakonceno_diplom %}{% if dotaznik.vzdelani_zakonceno_vyucni_list or dotaznik.vzdelani_zakonceno_maturita %}, {% endif %}Diplom{% endif %}
+          {% else %}
+            neuvedeno
+          {% endif %}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Poslední zaměstnavatel -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2">
+      <h6 class="mb-0">
+        <i class="fa fa-building-o me-1"></i> Poslední zaměstnavatel
+      </h6>
+    </div>
+    <div class="gth-card-body py-3 small">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Název firmy</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.posledni_zam_nazev_firmy|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Pracovní zařazení</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.posledni_zam_pracovni_zarazeni|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Období</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.posledni_zam_od or dotaznik.posledni_zam_do %}
+            {{ dotaznik.posledni_zam_od|default:"?" }} – {{ dotaznik.posledni_zam_do|default:"dosud" }}
+          {% else %}
+            — 
+          {% endif %}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Další údaje -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2">
+      <h6 class="mb-0">
+        <i class="fa fa-info-circle me-1"></i> Další údaje
+      </h6>
+    </div>
+    <div class="gth-card-body py-3 small">
+      <dl class="row mb-2">
+        <dt class="col-sm-3">Změněná pracovní schopnost</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.zmenena_prac_schopnost %}Ano{% else %}Ne{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">V evidenci ÚP</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.vedeni_v_evidenci_up %}Ano{% else %}Ne{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Jiný pracovní poměr</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.jiny_pracovni_pomer %}Ano{% else %}Ne{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">OSVČ</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.je_osvc %}Ano{% else %}Ne{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Zápočtový list předložen</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.zapoctovy_list_predlozen %}Ano{% else %}Ne{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Čistý trestní rejstřík</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.cisty_trestni_rejstrik %}Ano{% else %}Ne{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Srážky ze mzdy</dt>
+        <dd class="col-sm-9">
+          {% if dotaznik.srazky_existuji %}Ano{% else %}Ne{% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Počet vyživovaných osob</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.pocet_vyzivovanych_osob|default:"0" }}
+        </dd>
+
+        <dt class="col-sm-3">Srážky – orgán a č. j.</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.srazky_vymahajici_orgam_a_cj|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Další poznámky</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.jine_poznamky|default:"—" }}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Pracovní zařazení -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2">
+      <h6 class="mb-0">
+        <i class="fa fa-briefcase me-1"></i> Pracovní zařazení
+      </h6>
+    </div>
+    <div class="gth-card-body py-3 small">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Pozice</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.pozice|default:"(zatím nevyplněno)" }}
+        </dd>
+
+        <dt class="col-sm-3">Typ pracovního poměru</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.get_typ_pomeru_display|default:"(nezadáno)" }}
+        </dd>
+
+        <dt class="col-sm-3">Úvazek (FTE)</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.uvazek_fte|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Hrubá mzda</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.mzda_hruba|default:"—" }}
+        </dd>
+
+        <dt class="col-sm-3">Pracovní doba</dt>
+        <dd class="col-sm-9">
+          {{ dotaznik.pracovni_doba_popis|default:"—" }}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Přílohy -->
+  <div class="card gth-card mb-4">
+    <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i class="fa fa-paperclip me-1"></i> Přílohy
+      </h6>
+      <small class="text-muted">Zkontrolujte, že jsou nahrané všechny potřebné dokumenty.</small>
+    </div>
+    <div class="gth-card-body py-3 small">
+      {% if dotaznik.prilohy.all %}
+        <ul class="list-group list-group-sm">
+          {% for p in dotaznik.prilohy.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>
+              <i class="fa fa-file-o me-1"></i>
+              {{ p.popis|default:p.soubor.name }}
+            </span>
+            <a href="{{ p.soubor.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+              Otevřít
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">K dotazníku zatím nejsou přiloženy žádné soubory.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Akce dole -->
+  <form method="post" action="{% url 'frontend:dotaznik_odeslat_hr' dotaznik.id %}" class="d-flex flex-wrap gap-2 mb-4">
     {% csrf_token %}
     <button type="submit" class="btn btn-primary">
-      Odeslat na personální oddělení
+      <i class="fa fa-send me-1"></i> Odeslat na personální oddělení
     </button>
     <a href="{% url 'frontend:dotaznik_edit' dotaznik.id %}" class="btn btn-secondary">
-      Zpět k úpravě
+      <i class="fa fa-pencil me-1"></i> Zpět k úpravě
     </a>
     <a href="{% url 'frontend:provoz_dashboard' %}" class="btn btn-link">
       Zpět na dashboard
