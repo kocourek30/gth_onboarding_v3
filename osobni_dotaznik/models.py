@@ -162,23 +162,27 @@ class OsobniDotaznik(models.Model):
         max_length=20,
     )
 
-    # Doručovací adresa
     dorucovaci_ulice = models.CharField(
         "Doručovací adresa – ulice",
         max_length=255,
+        blank=True,  # ← přidat
     )
     dorucovaci_cislo_popisne = models.CharField(
         "Doručovací adresa – číslo popisné/orientační",
         max_length=50,
+        blank=True,  # ← přidat
     )
     dorucovaci_mesto = models.CharField(
         "Doručovací adresa – město/obec",
         max_length=255,
+        blank=True,  # ← přidat
     )
     dorucovaci_psc = models.CharField(
         "Doručovací adresa – PSČ",
         max_length=20,
+        blank=True,  # ← přidat
     )
+
 
     # Informace o pobírání důchodu
     duchod_predcasny = models.BooleanField(
@@ -396,6 +400,31 @@ class OsobniDotaznik(models.Model):
         "Text k podpisu zaměstnance",
         blank=True,
     )
+
+        # Pracovní zařazení / nastavení
+    uvazek_fte = models.DecimalField(
+        "Úvazek (FTE)",
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Např. 1.00, 0.75, 0.50",
+    )
+    pracovni_doba_popis = models.CharField(
+        "Rozvržení pracovní doby",
+        max_length=255,
+        blank=True,
+        help_text="Např. dvousměnný provoz, PO–PÁ, krátký/dlouhý týden…",
+    )
+    mzda_hruba = models.DecimalField(
+        "Hrubá mzda / odměna",
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Např. 25000.00 nebo hodinová sazba",
+    )
+
 
     def __str__(self):
         cele_jmeno = f"{self.jmeno} {self.prijmeni}"

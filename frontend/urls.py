@@ -44,4 +44,8 @@ path(
 
 
 
+    path("dotaznik/<int:dotaznik_id>/priloha/add/", views.priloha_add, name="priloha_add"),
+    path("priloha/<int:priloha_id>/delete/", views.priloha_delete, name="priloha_delete"),
+
+
 ]

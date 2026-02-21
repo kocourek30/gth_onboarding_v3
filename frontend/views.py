@@ -31,11 +31,9 @@ def provoz_dashboard(request):
         start_form = StartDotaznikForm(request.POST, user=request.user)
         if start_form.is_valid():
             provoz = start_form.cleaned_data["provoz"]
-            pozice = start_form.cleaned_data["pozice"]
 
             dotaznik = OsobniDotaznik.objects.create(
                 provoz=provoz,
-                pozice=pozice,
                 created_by=request.user,
                 jmeno="",
                 prijmeni="",
@@ -113,11 +111,13 @@ def dotaznik_edit(request, dotaznik_id):
         # rozlišíme akci podle jména tlačítka
         if "ulozit_dotaznik" in request.POST:
             form = OsobniDotaznikEditForm(request.POST, instance=dotaznik)
-            priloha_form = PrilohaForm()  # teď neřešíme upload
+            priloha_form = PrilohaForm()
             if form.is_valid():
-                form.save()
-                # stav necháváme (draft/vráceno); o odeslání rozhoduje samostatné tlačítko
+                obj = form.save()
+                print("OK ulozeno", obj.id)
                 return redirect("frontend:provoz_dashboard")
+            else:
+                print("FORM ERRORS:", form.errors.as_json())
         elif "pridat_prilohu" in request.POST:
             # při nahrávání přílohy hlavní form vůbec nevalidujeme
             form = OsobniDotaznikEditForm(instance=dotaznik)
@@ -236,6 +236,8 @@ def dotaznik_detail_provoz(request, dotaznik_id):
     )
 
 
+from django.http import HttpResponseRedirect
+
 @login_required
 @require_POST
 def priloha_delete(request, priloha_id):
@@ -248,8 +250,11 @@ def priloha_delete(request, priloha_id):
         if dotaznik.provoz not in profil.spravovane_provozy.all():
             return redirect("frontend:provoz_dashboard")
 
+    print("Mazání přílohy:", priloha.id, priloha.soubor.name)
     priloha.delete()
-    return redirect("frontend:dotaznik_edit", dotaznik_id=dotaznik.id)
+    return HttpResponseRedirect(
+        reverse("frontend:dotaznik_edit", kwargs={"dotaznik_id": dotaznik.id}) + "#prilohy"
+    )
 
 
 class RoleBasedLoginView(LoginView):
@@ -269,3 +274,22 @@ class RoleBasedLoginView(LoginView):
             return reverse("frontend:provoz_dashboard")
 
         return reverse("admin:index")
+    
+@login_required
+@require_POST
+def priloha_add(request, dotaznik_id):
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+
+    profil = getattr(request.user, "profile", None)
+    if profil and profil.spravovane_provozy.exists():
+        if dotaznik.provoz not in profil.spravovane_provozy.all():
+            return redirect("frontend:provoz_dashboard")
+
+    form = PrilohaForm(request.POST, request.FILES)
+    if form.is_valid():
+        priloha = form.save(commit=False)
+        priloha.dotaznik = dotaznik
+        priloha.save()
+
+    return redirect("frontend:dotaznik_edit", dotaznik_id=dotaznik.id)
+

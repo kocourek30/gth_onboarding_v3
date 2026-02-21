@@ -13,62 +13,8 @@
     <i class="fa fa-briefcase me-1"></i> Pozice: {{ dotaznik.pozice }}
   </p>
 
-  <!-- Sekční navigace -->
-  <ul class="nav nav-pills mb-3 small">
-    <li class="nav-item">
-      <a class="nav-link active" href="#osobni-udaje">
-        <i class="fa fa-user me-1"></i> Osobní údaje
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#banka">
-        <i class="fa fa-university me-1"></i> Bankovní spojení
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#adresy">
-        <i class="fa fa-home me-1"></i> Adresy
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#duchod">
-        <i class="fa fa-wheelchair me-1"></i> Důchod
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#vzdelani">
-        <i class="fa fa-graduation-cap me-1"></i> Vzdělání
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#zamestnavatel">
-        <i class="fa fa-building-o me-1"></i> Poslední zaměstnavatel
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#cizinec">
-        <i class="fa fa-globe me-1"></i> Cizinec & pojištění
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#srazky">
-        <i class="fa fa-balance-scale me-1"></i> Srážky & vyživované osoby
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#dalsi">
-        <i class="fa fa-info-circle me-1"></i> Další údaje
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#prilohy">
-        <i class="fa fa-paperclip me-1"></i> Přílohy
-      </a>
-    </li>
-  </ul>
-
-  <!-- Formulář -->
-  <form method="post" enctype="multipart/form-data">
+  <!-- HLAVNÍ FORM – jen dotazník -->
+  <form method="post">
     {% csrf_token %}
 
     <!-- Osobní údaje -->
@@ -173,10 +119,8 @@
 
         <h6 class="small text-muted mt-3">Doručovací adresa</h6>
         <div class="form-check mb-2">
-          <input class="form-check-input" type="checkbox" id="id_dorucovaci_jina">
-          <label class="form-check-label small" for="id_dorucovaci_jina">
-            Doručovací adresa je jiná než trvalé bydliště
-          </label>
+          {{ form.dorucovaci_adresa_jina }}
+          {{ form.dorucovaci_adresa_jina.label_tag }}
         </div>
 
         <div class="row g-2" id="dorucovaci-fields">
@@ -475,96 +419,128 @@
             {{ form.jine_poznamky.label_tag }}{{ form.jine_poznamky }}
           </div>
         </div>
-
-        <div class="mt-3">
-          <button class="btn btn-primary" type="submit" name="ulozit_dotaznik">
-            <i class="fa fa-save me-1"></i> Uložit
-          </button>
-          <a href="{% url 'frontend:provoz_dashboard' %}" class="btn btn-secondary">
-            <i class="fa fa-arrow-left me-1"></i> Zpět na dashboard
-          </a>
-        </div>
       </div>
     </div>
 
-    <!-- Přílohy -->
-    <div id="prilohy" class="card gth-card mb-3">
-      <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+    <!-- Pracovní zařazení -->
+    <div id="pracovni-zarazeni" class="card gth-card mb-3">
+      <div class="gth-card-header py-2">
         <h6 class="mb-0">
-          <i class="fa fa-paperclip me-1"></i> Přílohy
+          <i class="fa fa-briefcase me-1"></i> Pracovní zařazení
         </h6>
-        <small class="text-muted">
-          Přiložte např. občanský průkaz, potvrzení a další dokumenty
-        </small>
       </div>
       <div class="gth-card-body py-3">
-        {% if dotaznik.prilohy.all %}
-  <div class="mb-3">
-    <h6 class="small text-muted mb-1">Nahrané soubory</h6>
-    <ul class="list-group list-group-sm">
-      {% for p in dotaznik.prilohy.all %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <span>
-            <i class="fa fa-file-o me-1"></i>
-            {{ p.popis|default:p.soubor.name }}
-          </span>
-          <div class="btn-group btn-group-sm" role="group">
-            <a href="{{ p.soubor.url }}" target="_blank"
-               class="btn btn-outline-secondary">
-              <i class="fa fa-download me-1"></i> Otevřít
-            </a>
-            <form method="post"
-                  action="{% url 'frontend:priloha_delete' p.id %}"
-                  style="display:inline;">
-              {% csrf_token %}
-              <button type="submit"
-                      class="btn btn-outline-danger"
-                      onclick="return confirm('Opravdu smazat tuto přílohu?');">
-                <i class="fa fa-trash-o me-1"></i> Smazat
-              </button>
-            </form>
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            {{ form.pozice.label_tag }}{{ form.pozice }}
           </div>
-        </li>
-      {% endfor %}
-    </ul>
-  </div>
-{% endif %}
-
-
-        <div class="border rounded p-2 bg-light">
-          <h6 class="small text-muted mb-2">
-            <i class="fa fa-plus-circle me-1"></i> Přidat novou přílohu
-          </h6>
-          <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-5">
-              {{ priloha_form.soubor.label_tag }}{{ priloha_form.soubor }}
-            </div>
-            <div class="col-12 col-md-5">
-              {{ priloha_form.popis.label_tag }}{{ priloha_form.popis }}
-            </div>
-            <div class="col-12 col-md-2 d-grid">
-              <button type="submit"
-                      name="pridat_prilohu"
-                      value="1"
-                      class="btn btn-outline-primary btn-sm">
-                <i class="fa fa-upload me-1"></i> Nahrát
-              </button>
-            </div>
+          <div class="col-md-6">
+            {{ form.typ_pomeru.label_tag }}{{ form.typ_pomeru }}
+          </div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-md-4">
+            {{ form.uvazek_fte.label_tag }}{{ form.uvazek_fte }}
+          </div>
+          <div class="col-md-4">
+            {{ form.mzda_hruba.label_tag }}{{ form.mzda_hruba }}
+          </div>
+          <div class="col-md-4">
+            {{ form.pracovni_doba_popis.label_tag }}{{ form.pracovni_doba_popis }}
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Jediná sada tlačítek dole -->
+    <div class="d-flex justify-content-between mt-3 mb-4">
+      <button class="btn btn-primary" type="submit" name="ulozit_dotaznik">
+        <i class="fa fa-save me-1"></i> Uložit
+      </button>
+      <a href="{% url 'frontend:provoz_dashboard' %}" class="btn btn-secondary">
+        <i class="fa fa-arrow-left me-1"></i> Zpět na dashboard
+      </a>
+    </div>
   </form>
+
+  <!-- PŘÍLOHY – samostatný blok, vlastní formy -->
+  <div id="prilohy" class="card gth-card mb-3">
+    <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i class="fa fa-paperclip me-1"></i> Přílohy
+      </h6>
+      <small class="text-muted">
+        Přiložte např. občanský průkaz, potvrzení a další dokumenty
+      </small>
+    </div>
+    <div class="gth-card-body py-3">
+      {% if dotaznik.prilohy.all %}
+      <div class="mb-3">
+        <h6 class="small text-muted mb-1">Nahrané soubory</h6>
+        <ul class="list-group list-group-sm">
+          {% for p in dotaznik.prilohy.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>
+              <i class="fa fa-file-o me-1"></i>
+              {{ p.popis|default:p.soubor.name }}
+            </span>
+            <div class="btn-group btn-group-sm" role="group">
+              <a href="{{ p.soubor.url }}" target="_blank" class="btn btn-outline-secondary">
+                <i class="fa fa-download me-1"></i> Otevřít
+              </a>
+              <form
+                method="post"
+                action="{% url 'frontend:priloha_delete' priloha_id=p.id %}"
+                class="d-inline"
+                onsubmit="return confirm('Opravdu smazat tuto přílohu?');"
+              >
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="fa fa-trash-o me-1"></i> Smazat
+                </button>
+              </form>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="border rounded p-2 bg-light mt-3">
+        <h6 class="small text-muted mb-2">
+          <i class="fa fa-plus-circle me-1"></i> Přidat novou přílohu
+        </h6>
+        <form
+          method="post"
+          enctype="multipart/form-data"
+          action="{% url 'frontend:priloha_add' dotaznik_id=dotaznik.id %}"
+          class="row g-2 align-items-end"
+        >
+          {% csrf_token %}
+          <div class="col-12 col-md-5">
+            {{ priloha_form.soubor.label_tag }}{{ priloha_form.soubor }}
+          </div>
+          <div class="col-12 col-md-5">
+            {{ priloha_form.popis.label_tag }}{{ priloha_form.popis }}
+          </div>
+          <div class="col-12 col-md-2 d-grid">
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+              <i class="fa fa-upload me-1"></i> Nahrát
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
   (function() {
-    const checkbox = document.getElementById("id_dorucovaci_jina");
+    const checkbox = document.getElementById("id_dorucovaci_adresa_jina");
     const fields = document.querySelectorAll("#dorucovaci-fields input");
 
     function updateDorucovaci() {
-      const enabled = checkbox.checked;
+      const enabled = checkbox && checkbox.checked;
       fields.forEach((el) => {
         el.disabled = !enabled;
         if (!enabled) {
