@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
+
 {% block title %}Dashboard provozu | Onboarding GTH{% endblock %}
+
 
 {% block content %}
 <div class="container-fluid py-3">
@@ -13,9 +15,30 @@
     <div class="gth-card-body py-3">
       <form class="row g-2 align-items-end" method="post">
         {% csrf_token %}
+
+        {# obecné chyby formuláře, pokud nějaké jsou #}
+        {% if start_form.non_field_errors %}
+          <div class="col-12">
+            <div class="alert alert-danger py-2 mb-2">
+              {% for error in start_form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
         <div class="col-12 col-md-8">
           <label class="form-label mb-1" for="id_provoz">Provoz</label>
           {{ start_form.provoz }}
+
+          {# chyby konkrétního pole provoz #}
+          {% if start_form.provoz.errors %}
+            <div class="text-danger small mt-1">
+              {% for error in start_form.provoz.errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
         <div class="col-12 col-md-4 d-grid">
           <button type="submit"
@@ -67,25 +90,22 @@
                     <span class="badge bg-light text-muted border">
                       {{ d.get_stav_display }}
                     </span>
-                   
                   </td>
-           <td>
-  {% if d.hr_poznamka_pro_provoz %}
-    <div class="small text-danger">
-            {% if d.hr_vratil_provozu %}
-      <div class="small text-muted mt-1">
-        Vrátil: {{ d.hr_vratil_provozu.get_full_name|default:d.hr_vratil_provozu.username }}
-        ({{ d.hr_vraceno_provozu_at|date:"d.m.Y H:i" }})
-      </div>
-    {% endif %}
-      
-      {{ d.hr_poznamka_pro_provoz|linebreaksbr }}
-    </div>
-
-  {% else %}
-    <span class="text-muted small">—</span>
-  {% endif %}
-</td>
+                  <td>
+                    {% if d.hr_poznamka_pro_provoz %}
+                      <div class="small text-danger">
+                        {% if d.hr_vratil_provozu %}
+                          <div class="small text-muted mt-1">
+                            Vrátil: {{ d.hr_vratil_provozu.get_full_name|default:d.hr_vratil_provozu.username }}
+                            ({{ d.hr_vraceno_provozu_at|date:"d.m.Y H:i" }})
+                          </div>
+                        {% endif %}
+                        {{ d.hr_poznamka_pro_provoz|linebreaksbr }}
+                      </div>
+                    {% else %}
+                      <span class="text-muted small">—</span>
+                    {% endif %}
+                  </td>
 
                   <td>
                     <a href="{% url 'frontend:dotaznik_edit' d.id %}"

@@ -36,8 +36,12 @@ class OsobniDotaznikEditForm(forms.ModelForm):
             "pozice",
             "typ_pomeru",
             "uvazek_fte",
-            "pracovni_doba_popis",
             "mzda_hruba",
+            "pracovni_doba_popis",
+            "doba_trvani",
+            "doba_urcita_do",
+            "datum_nastupu",
+            "zkusebni_doba_mesice",
             # stav z formuláře neukazujeme
             "titul",
             "jmeno",
@@ -195,6 +199,33 @@ class OsobniDotaznikEditForm(forms.ModelForm):
                 attrs={"type": "date", "class": "form-control form-control-sm"},
                 format="%Y-%m-%d",
             ),
+            
+            "datum_narozeni": forms.DateInput(
+                format="%d/%m/%Y",
+                attrs={"class": "form-control", "placeholder": "dd.mm.rrrr"}
+            ),
+            "duchod_datum_vzniku": forms.DateInput(
+                format="%d/%m/%Y",
+                attrs={"class": "form-control", "placeholder": "dd.mm.rrrr"}
+            ),
+            "posledni_zam_od": forms.DateInput(
+                format="%d/%m/%Y",
+                attrs={"class": "form-control", "placeholder": "dd.mm.rrrr"}
+            ),
+            "posledni_zam_do": forms.DateInput(
+                format="%d/%m/%Y",
+                attrs={"class": "form-control", "placeholder": "dd.mm.rrrr"}
+            ),
+            "doba_urcita_do": forms.DateInput(
+                format="%d/%m/%Y",
+                attrs={"class": "form-control", "placeholder": "dd.mm.rrrr"}
+            ),
+            "datum_nastupu": forms.DateInput(
+                format="%d/%m/%Y",
+                attrs={"class": "form-control", "placeholder": "dd.mm.rrrr"}
+            ),
+        
+
         }
 
     def __init__(self, *args, **kwargs):
@@ -206,7 +237,19 @@ class OsobniDotaznikEditForm(forms.ModelForm):
             )
         self.fields["datum_narozeni"].input_formats = ["%Y-%m-%d"]
         self.fields["duchod_datum_vzniku"].input_formats = ["%Y-%m-%d"]
-
+        
+        date_fields = [
+            "datum_narozeni",
+            "duchod_datum_vzniku",
+            "posledni_zam_od",
+            "posledni_zam_do",
+            "doba_urcita_do",
+            "datum_nastupu",
+        ]
+        for name in date_fields:
+            if name in self.fields:
+                self.fields[name].input_formats = ["%d/%m/%Y"]
+                
         if self.instance and (
             self.instance.dorucovaci_ulice
             or self.instance.dorucovaci_cislo_popisne

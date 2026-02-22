@@ -157,32 +157,37 @@ def provoz_dashboard(request):
         if start_form.is_valid():
             provoz = start_form.cleaned_data["provoz"]
 
-            # bezpečnost: provoz musí být mezi spravovanými
-            if not profil.spravovane_provozy.filter(id=provoz.id).exists():
-                return redirect("frontend:provoz_dashboard")
-
-            dotaznik = OsobniDotaznik.objects.create(
-                provoz=provoz,
-                created_by=request.user,
-                jmeno="",
-                prijmeni="",
-                datum_narozeni="2000-01-01",
-                misto_narozeni="",
-                statni_obcanstvi="",
-                rodne_cislo="000000/0000",
-                zdravotni_pojistovna="",
-                cislo_uctu="",
-                kod_banky="",
-                trvale_ulice="",
-                trvale_cislo_popisne="",
-                trvale_mesto="",
-                trvale_psc="",
-                dorucovaci_ulice="",
-                dorucovaci_cislo_popisne="",
-                dorucovaci_mesto="",
-                dorucovaci_psc="",
-            )
-            return redirect("frontend:dotaznik_edit", dotaznik_id=dotaznik.id)
+            # když není vybraný provoz (None), přidej chybu do formuláře
+            if provoz is None:
+                start_form.add_error("provoz", "Musíte vybrat provoz, než začnete dotazník.")
+            else:
+                # bezpečnost: provoz musí být mezi spravovanými
+                if not profil.spravovane_provozy.filter(id=provoz.id).exists():
+                    start_form.add_error("provoz", "Nemáte oprávnění k tomuto provozu.")
+                else:
+                    dotaznik = OsobniDotaznik.objects.create(
+                        provoz=provoz,
+                        created_by=request.user,
+                        jmeno="",
+                        prijmeni="",
+                        datum_narozeni="2000-01-01",
+                        misto_narozeni="",
+                        statni_obcanstvi="",
+                        rodne_cislo="000000/0000",
+                        zdravotni_pojistovna="",
+                        cislo_uctu="",
+                        kod_banky="",
+                        trvale_ulice="",
+                        trvale_cislo_popisne="",
+                        trvale_mesto="",
+                        trvale_psc="",
+                        dorucovaci_ulice="",
+                        dorucovaci_cislo_popisne="",
+                        dorucovaci_mesto="",
+                        dorucovaci_psc="",
+                    )
+                    return redirect("frontend:dotaznik_edit", dotaznik_id=dotaznik.id)
+        # když form není validní, jen propadne na render níže
     else:
         start_form = StartDotaznikForm(user=request.user)
 
@@ -213,7 +218,6 @@ def provoz_dashboard(request):
     }
     return render(request, "frontend/provoz_dashboard.html", context)
 
-
 @login_required
 def dotaznik_edit(request, dotaznik_id):
     profil = getattr(request.user, "profile", None)
@@ -233,15 +237,20 @@ def dotaznik_edit(request, dotaznik_id):
         return redirect("frontend:provoz_dashboard")
 
     if request.method == "POST":
+        print("=== DOTAZNIK_EDIT POST ===", request.POST.get("ulozit_dotaznik"), request.POST.get("pridat_prilohu"))
+
         if "ulozit_dotaznik" in request.POST:
             form = OsobniDotaznikEditForm(request.POST, instance=dotaznik)
             priloha_form = PrilohaForm()
+            print("=== FORM DATA ===", form.data)
+
             if form.is_valid():
                 obj = form.save()
-                print("OK ulozeno", obj.id)
+                print("=== OK ULOZENO ===", obj.id)
                 return redirect("frontend:provoz_dashboard")
             else:
-                print("FORM ERRORS:", form.errors.as_json())
+                print("=== FORM ERRORS ===", form.errors.as_json())
+
         elif "pridat_prilohu" in request.POST:
             form = OsobniDotaznikEditForm(instance=dotaznik)
             priloha_form = PrilohaForm(request.POST, request.FILES)
@@ -251,6 +260,7 @@ def dotaznik_edit(request, dotaznik_id):
                 pridana.save()
                 return redirect("frontend:dotaznik_edit", dotaznik_id=dotaznik.id)
         else:
+            print("=== NEZNAME TLACITKO ===", request.POST.keys())
             form = OsobniDotaznikEditForm(request.POST, instance=dotaznik)
             priloha_form = PrilohaForm()
     else:

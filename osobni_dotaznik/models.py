@@ -498,6 +498,39 @@ class OsobniDotaznik(models.Model):
         blank=True,
         help_text="Např. 25000.00 nebo hodinová sazba",
     )
+    DOBA_NEURCITA = "neurcita"
+    DOBA_URCITA = "urcita"
+    DOBA_TRVANI_CHOICES = [
+        (DOBA_NEURCITA, "Na dobu neurčitou"),
+        (DOBA_URCITA, "Na dobu určitou"),
+    ]
+
+    doba_trvani = models.CharField(
+        "Doba trvání pracovního poměru",
+        max_length=20,
+        choices=DOBA_TRVANI_CHOICES,
+        null=True,
+        blank=True,
+    )
+    doba_urcita_do = models.DateField(
+        "Doba určitá do",
+        null=True,
+        blank=True,
+        help_text="Vyplňte pouze pokud jde o dobu určitou.",
+    )
+
+    datum_nastupu = models.DateField(
+        "Datum nástupu do práce",
+        null=True,
+        blank=True,
+    )
+
+    zkusebni_doba_mesice = models.PositiveIntegerField(
+        "Délka zkušební doby (měsíce)",
+        null=True,
+        blank=True,
+        help_text="Např. 3 měsíce",
+    )
 
     def __str__(self):
         cele_jmeno = f"{self.jmeno} {self.prijmeni}"

@@ -331,41 +331,75 @@
   </div>
 
   <!-- Pracovní zařazení -->
-  <div class="card gth-card mb-3">
-    <div class="gth-card-header py-2">
-      <h6 class="mb-0">
-        <i class="fa fa-briefcase me-1"></i> Pracovní zařazení
-      </h6>
-    </div>
-    <div class="gth-card-body py-3 small">
-      <dl class="row mb-0">
-        <dt class="col-sm-3">Pozice</dt>
-        <dd class="col-sm-9">
-          {{ dotaznik.pozice|default:"(zatím nevyplněno)" }}
-        </dd>
-
-        <dt class="col-sm-3">Typ pracovního poměru</dt>
-        <dd class="col-sm-9">
-          {{ dotaznik.get_typ_pomeru_display|default:"(nezadáno)" }}
-        </dd>
-
-        <dt class="col-sm-3">Úvazek (FTE)</dt>
-        <dd class="col-sm-9">
-          {{ dotaznik.uvazek_fte|default:"—" }}
-        </dd>
-
-        <dt class="col-sm-3">Hrubá mzda</dt>
-        <dd class="col-sm-9">
-          {{ dotaznik.mzda_hruba|default:"—" }}
-        </dd>
-
-        <dt class="col-sm-3">Pracovní doba</dt>
-        <dd class="col-sm-9">
-          {{ dotaznik.pracovni_doba_popis|default:"—" }}
-        </dd>
-      </dl>
-    </div>
+<div class="card gth-card mb-3">
+  <div class="gth-card-header py-2">
+    <h6 class="mb-0">
+      <i class="fa fa-briefcase me-1"></i> Pracovní zařazení
+    </h6>
   </div>
+  <div class="gth-card-body py-3 small">
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Pozice</dt>
+      <dd class="col-sm-9">
+        {{ dotaznik.pozice|default:"(zatím nevyplněno)" }}
+      </dd>
+
+      <dt class="col-sm-3">Typ pracovního poměru</dt>
+      <dd class="col-sm-9">
+        {{ dotaznik.get_typ_pomeru_display|default:"(nezadáno)" }}
+      </dd>
+
+      <dt class="col-sm-3">Doba trvání</dt>
+      <dd class="col-sm-9">
+        {% if dotaznik.doba_trvani == "neurcita" %}
+          Na dobu neurčitou
+        {% elif dotaznik.doba_trvani == "urcita" %}
+          Na dobu určitou
+          {% if dotaznik.doba_urcita_do %}
+            do {{ dotaznik.doba_urcita_do|date:"d.m.Y" }}
+          {% endif %}
+        {% else %}
+          (nezadáno)
+        {% endif %}
+      </dd>
+
+      <dt class="col-sm-3">Datum nástupu</dt>
+      <dd class="col-sm-9">
+        {{ dotaznik.datum_nastupu|date:"d.m.Y"|default:"(nezadáno)" }}
+      </dd>
+
+      <dt class="col-sm-3">Zkušební doba</dt>
+      <dd class="col-sm-9">
+        {% if dotaznik.zkusebni_doba_mesice %}
+          {{ dotaznik.zkusebni_doba_mesice }} měsíců
+        {% else %}
+          (nezadáno)
+        {% endif %}
+      </dd>
+
+      <dt class="col-sm-3">Úvazek (FTE)</dt>
+      <dd class="col-sm-9">
+        {{ dotaznik.uvazek_fte|default:"—" }}
+      </dd>
+
+      <dt class="col-sm-3">Hrubá mzda</dt>
+      <dd class="col-sm-9">
+        {{ dotaznik.mzda_hruba|default:"—" }}
+      </dd>
+
+      <dt class="col-sm-3">Pracovní doba</dt>
+      <dd class="col-sm-9">
+        {{ dotaznik.pracovni_doba_popis|default:"—" }}
+      </dd>
+
+      <dt class="col-sm-3">Text k podpisu zaměstnance</dt>
+      <dd class="col-sm-9">
+        {{ dotaznik.potvrzeni_podpis_text|default:"—" }}
+      </dd>
+    </dl>
+  </div>
+</div>
+
 
   <!-- Přílohy -->
   <div class="card gth-card mb-4">
