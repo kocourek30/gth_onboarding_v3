@@ -14,35 +14,64 @@ from django.utils import timezone
 
 # --- HR část -------------------------------------------------------------
 
+from django.db.models import Q
+
 @login_required
 def hr_dashboard(request):
     profil = getattr(request.user, "profile", None)
     if not profil or profil.role != "hr":
         return redirect("frontend:provoz_dashboard")
 
+    q_nove = request.GET.get("q_nove", "").strip()
+    q_schv = request.GET.get("q_schvalene", "").strip()
+    q_vrac = request.GET.get("q_vracene", "").strip()
+
     dotazniky_nove = OsobniDotaznik.objects.filter(
         stav=OsobniDotaznik.STAV_PROVOZ_ODESLAL
     ).order_by("-created_at")
 
-    dotazniky_hr_kontroluje = OsobniDotaznik.objects.filter(
-        stav=OsobniDotaznik.STAV_HR_KONTROLUJE
-    ).order_by("-updated_at")
+    if q_nove:
+        dotazniky_nove = dotazniky_nove.filter(
+            Q(jmeno__icontains=q_nove)
+            | Q(prijmeni__icontains=q_nove)
+            | Q(provoz__nazev__icontains=q_nove)
+            | Q(pozice__nazev__icontains=q_nove)
+            | Q(typ_pomeru__icontains=q_nove)
+        )
 
     dotazniky_schvalene = OsobniDotaznik.objects.filter(
         stav=OsobniDotaznik.STAV_HR_SCHVALIL
     ).order_by("-updated_at")
 
+    if q_schv:
+        dotazniky_schvalene = dotazniky_schvalene.filter(
+            Q(jmeno__icontains=q_schv)
+            | Q(prijmeni__icontains=q_schv)
+            | Q(provoz__nazev__icontains=q_schv)
+            | Q(pozice__nazev__icontains=q_schv)
+            | Q(typ_pomeru__icontains=q_schv)
+        )
+
     dotazniky_vracene_provozu = OsobniDotaznik.objects.filter(
         stav=OsobniDotaznik.STAV_VRACENO_PROVOZU
     ).order_by("-updated_at")
 
+    if q_vrac:
+        dotazniky_vracene_provozu = dotazniky_vracene_provozu.filter(
+            Q(jmeno__icontains=q_vrac)
+            | Q(prijmeni__icontains=q_vrac)
+            | Q(provoz__nazev__icontains=q_vrac)
+            | Q(pozice__nazev__icontains=q_vrac)
+            | Q(typ_pomeru__icontains=q_vrac)
+        )
+
     context = {
         "dotazniky_nove": dotazniky_nove,
-        "dotazniky_hr_kontroluje": dotazniky_hr_kontroluje,
         "dotazniky_schvalene": dotazniky_schvalene,
         "dotazniky_vracene_provozu": dotazniky_vracene_provozu,
     }
     return render(request, "frontend/hr_dashboard.html", context)
+
 
 
 @login_required
@@ -114,6 +143,7 @@ def hr_generate_contract(request, dotaznik_id):
     dotaznik.save()
 
     return redirect("frontend:dotaznik_detail_hr", dotaznik_id=dotaznik.id)
+
 
 
 @login_required
@@ -587,3 +617,224 @@ def dokument_delete(request, dokument_id):
         dokument.delete()
 
     return redirect("frontend:dotaznik_detail_hr", dotaznik_id=dotaznik_id)
+
+
+# views.py
+from django.db.models import Exists, OuterRef, Q
+from django.utils import timezone
+from osobni_dotaznik.models import OsobniDotaznik, GenerovanyDokument
+
+@login_required
+def hr_contract_registry(request):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role != "hr":
+        return redirect("frontend:provoz_dashboard")
+
+    today = timezone.localdate()
+
+    q_docs = GenerovanyDokument.objects.filter(
+        dotaznik=OuterRef("pk"),
+        typ="mzdovy_vymer",
+    )
+
+    dotazniky = (
+        OsobniDotaznik.objects.annotate(
+            has_doc=Exists(q_docs),
+        )
+        .filter(
+            stav=OsobniDotaznik.STAV_HR_SCHVALIL,
+            has_doc=True,
+        )
+        .select_related("provoz", "pozice")
+        .order_by("prijmeni", "jmeno")
+    )
+
+    search = request.GET.get("q", "").strip()
+    if search:
+        dotazniky = dotazniky.filter(
+            Q(jmeno__icontains=search)
+            | Q(prijmeni__icontains=search)
+            | Q(provoz__nazev__icontains=search)
+            | Q(pozice__nazev__icontains=search)
+        )
+
+    context = {
+        "dotazniky": dotazniky,
+        "search": search,
+        "today": today,
+    }
+    return render(request, "frontend/hr_contract_registry.html", context)
+
+
+@login_required
+def provoz_contract_registry(request):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
+
+    today = timezone.localdate()
+
+    moje_provozy_ids = profil.spravovane_provozy.values_list("id", flat=True)
+
+    q_docs = GenerovanyDokument.objects.filter(
+        dotaznik=OuterRef("pk"),
+        typ="mzdovy_vymer",
+    )
+
+    dotazniky = (
+        OsobniDotaznik.objects.annotate(
+            has_doc=Exists(q_docs),
+        )
+        .filter(
+            stav=OsobniDotaznik.STAV_HR_SCHVALIL,
+            has_doc=True,
+            provoz_id__in=moje_provozy_ids,
+        )
+        .select_related("provoz", "pozice")
+        .order_by("prijmeni", "jmeno")
+    )
+
+    search = request.GET.get("q", "").strip()
+    if search:
+        dotazniky = dotazniky.filter(
+            Q(jmeno__icontains=search)
+            | Q(prijmeni__icontains=search)
+            | Q(provoz__nazev__icontains=search)
+            | Q(pozice__nazev__icontains=search)
+        )
+
+    context = {
+        "dotazniky": dotazniky,
+        "search": search,
+        "today": today,
+    }
+    return render(request, "frontend/hr_contract_registry.html", context)
+
+# views.py
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+from osobni_dotaznik.models import OsobniDotaznik
+
+@login_required
+def employee_detail(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil:
+        return redirect("frontend:login")
+
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+
+    # HR může vidět vše
+    if profil.role == "hr":
+        pass
+    # provoz / oblastní manažer jen své provozy
+    elif profil.role in ("manager_provozu", "oblastni_manager"):
+        if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
+            return redirect("frontend:provoz_dashboard")
+    else:
+        # ostatní role nepustit
+        return redirect("frontend:login")
+
+    return render(
+        request,
+        "frontend/employee_detail.html",  # nebo existující šablona, kterou používáš
+        {"dotaznik": dotaznik},
+    )
+
+
+from django.contrib import messages
+from django.utils import timezone
+
+@login_required
+@require_POST
+def hr_generate_documents(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role != "hr":
+        return redirect("frontend:provoz_dashboard")
+
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+
+    # 1) vygenerovat mzdový výměr (a případně další dokumenty)
+    try:
+        _vygenerovat_mzdovy_vymer_for_dotaznik(dotaznik)
+        # sem případně přidáš další generování (pracovní smlouva apod.)
+    except Exception as e:
+        messages.error(request, f"Chyba při generování dokumentů: {e}")
+        return redirect("frontend:dotaznik_detail_hr", dotaznik_id=dotaznik.id)
+
+    # 2) označit jako schválené HR
+    dotaznik.stav = OsobniDotaznik.STAV_HR_SCHVALIL
+    dotaznik.hr_schvalil = request.user
+    dotaznik.hr_schvalil_at = timezone.now()
+    dotaznik.save()
+
+    messages.success(request, "Dokumenty byly vygenerovány a dotazník byl označen jako schválený HR.")
+    return redirect("frontend:dotaznik_detail_hr", dotaznik_id=dotaznik.id)
+
+
+
+from io import BytesIO
+import uuid
+import os
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from docxtpl import DocxTemplate
+
+def _vygenerovat_mzdovy_vymer_for_dotaznik(dotaznik):
+    template_path = os.path.join(
+        settings.BASE_DIR,
+        "templates",
+        "dokumenty",
+        "mzdovy_vymer.docx",
+    )
+    if not os.path.exists(template_path):
+        raise FileNotFoundError(f"Šablona DOCX nenalezena: {template_path}")
+
+    doc = DocxTemplate(template_path)
+
+    context = {
+        "first_name": dotaznik.jmeno or "",
+        "last_name": dotaznik.prijmeni or "",
+        "date_of_birth": dotaznik.datum_narozeni.strftime("%d.%m.%Y")
+        if dotaznik.datum_narozeni else "",
+        "workplace_name": dotaznik.provoz.nazev if dotaznik.provoz else "",
+        "workplace_address": getattr(dotaznik.provoz, "adresa", "")
+        if dotaznik.provoz else "",
+        "wage_effective_from": dotaznik.datum_nastupu.strftime("%d.%m.%Y")
+        if dotaznik.datum_nastupu else "",
+        "base_salary": (
+            f"{dotaznik.mzda_hruba:,.0f}".replace(",", " ")
+            if dotaznik.mzda_hruba else "0"
+        ),
+        "variable_salary": "0",
+    }
+
+    doc.render(context)
+    docx_io = BytesIO()
+    doc.save(docx_io)
+    docx_io.seek(0)
+
+    safe_jmeno = (dotaznik.jmeno or "").strip().replace(" ", "_")
+    safe_prijmeni = (dotaznik.prijmeni or "").strip().replace(" ", "_")
+    uniq = uuid.uuid4().hex[:6]
+    filename_base = f"mzdovy_vymer_{safe_prijmeni}_{safe_jmeno}_{uniq}"
+
+    dokument, created = GenerovanyDokument.objects.get_or_create(
+        dotaznik=dotaznik,
+        typ="mzdovy_vymer",
+        defaults={
+            "nazev": f"Mzdový výměr {dotaznik.prijmeni} {dotaznik.jmeno}",
+        },
+    )
+
+    if dokument.docx_soubor:
+        default_storage.delete(dokument.docx_soubor.name)
+
+    dokument.nazev = f"Mzdový výměr {dotaznik.prijmeni} {dotaznik.jmeno}"
+    dokument.docx_soubor.save(
+        f"{filename_base}.docx",
+        ContentFile(docx_io.read()),
+        save=True,
+    )
+
+    return dokument

@@ -1,0 +1,620 @@
+{# templates/frontend/employee_detail.html #}
+{% extends "base.html" %}
+
+{% block title %}Detail zaměstnance{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <i class="fa fa-id-card-o me-2"></i>
+        <div>
+          <h6 class="mb-0">
+            {{ dotaznik.prijmeni }} {{ dotaznik.jmeno }}
+          </h6>
+          <small>
+            {{ dotaznik.provoz.nazev|default:"(provoz nevyplněn)" }}
+            · {{ dotaznik.pozice|default:"(pozice nevyplněna)" }}
+          </small>
+        </div>
+      </div>
+      <div class="text-end small">
+        <span class="badge bg-secondary">
+          {{ dotaznik.get_stav_display }}
+        </span>
+      </div>
+    </div>
+
+    <div class="gth-card-body">
+      <div class="row g-3">
+        {# LEVÁ „OBČANKA“ #}
+        <div class="col-12 col-lg-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex mb-3">
+                <div class="me-3">
+                  <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+                       style="width:70px;height:70px;">
+                    <i class="fa fa-user fa-2x text-muted"></i>
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <h5 class="mb-1">
+                    {{ dotaznik.jmeno }} {{ dotaznik.prijmeni }}
+                  </h5>
+                  {% if dotaznik.titul %}
+                    <div class="text-muted small mb-1">{{ dotaznik.titul }}</div>
+                  {% endif %}
+                  <div class="small mb-1">
+                    <span class="badge bg-light text-dark border me-1">
+                      <i class="fa fa-briefcase me-1"></i>
+                      {{ dotaznik.get_typ_pomeru_display|default:"Typ poměru nevyplněn" }}
+                    </span>
+                  </div>
+
+                  {# BADGE – důchody, OSVČ, jiné poměry #}
+                  <div class="small">
+                    {% if dotaznik.duchod_starobni %}
+                      <span class="badge bg-warning text-dark me-1">
+                        <i class="fa fa-clock-o me-1"></i> Starobní důchod
+                      </span>
+                    {% endif %}
+                    {% if dotaznik.duchod_invalidni %}
+                      <span class="badge bg-danger me-1">
+                        <i class="fa fa-wheelchair-alt me-1"></i> Invalidní důchod
+                      </span>
+                    {% endif %}
+                    {% if dotaznik.duchod_predcasny %}
+                      <span class="badge bg-info text-dark me-1">
+                        <i class="fa fa-hourglass-half me-1"></i> Předčasný důchod
+                      </span>
+                    {% endif %}
+                    {% if dotaznik.je_osvc %}
+                      <span class="badge bg-secondary me-1">
+                        <i class="fa fa-id-badge me-1"></i> OSVČ
+                      </span>
+                    {% endif %}
+                    {% if dotaznik.jiny_pracovni_pomer %}
+                      <span class="badge bg-secondary me-1">
+                        <i class="fa fa-exchange me-1"></i> Další pracovní poměr
+                      </span>
+                    {% endif %}
+                    {% if dotaznik.vedeni_v_evidenci_up %}
+                      <span class="badge bg-secondary me-1">
+                        <i class="fa fa-building-o me-1"></i> ÚP evidence
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-2">
+
+              <dl class="row mb-0 small">
+                <dt class="col-5">Rodné číslo</dt>
+                <dd class="col-7">{{ dotaznik.rodne_cislo }}</dd>
+
+                {% if dotaznik.rodna_prijmeni %}
+                  <dt class="col-5">Rodné příjmení</dt>
+                  <dd class="col-7">{{ dotaznik.rodna_prijmeni }}</dd>
+                {% endif %}
+
+                <dt class="col-5">Datum narození</dt>
+                <dd class="col-7">
+                  {{ dotaznik.datum_narozeni|date:"d.m.Y" }}
+                </dd>
+
+                <dt class="col-5">Místo narození</dt>
+                <dd class="col-7">{{ dotaznik.misto_narozeni }}</dd>
+
+                <dt class="col-5">Občanství</dt>
+                <dd class="col-7">{{ dotaznik.statni_obcanstvi }}</dd>
+
+                <dt class="col-5">Rodinný stav</dt>
+                <dd class="col-7">{{ dotaznik.rodinny_stav|default:"-" }}</dd>
+
+                <dt class="col-5">Telefon</dt>
+                <dd class="col-7">{{ dotaznik.telefon|default:"-" }}</dd>
+
+                <dt class="col-5">E‑mail</dt>
+                <dd class="col-7">{{ dotaznik.email|default:"-" }}</dd>
+
+                <dt class="col-5">Zdrav. pojišťovna</dt>
+                <dd class="col-7">{{ dotaznik.zdravotni_pojistovna }}</dd>
+              </dl>
+
+              <hr class="my-2">
+
+              <h6 class="small text-muted mb-1">
+                <i class="fa fa-credit-card me-1"></i> Bankovní spojení
+              </h6>
+              <p class="small mb-0">
+                Číslo účtu: {{ dotaznik.cislo_uctu }} / {{ dotaznik.kod_banky }}<br>
+                {{ dotaznik.nazev_banky|default:"Název banky nevyplněn" }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {# PRAVÝ SLOUPEC – SEKCE #}
+        <div class="col-12 col-lg-8">
+          <div class="row g-3">
+
+            {# PRACOVNÍ POMĚR #}
+            <div class="col-12">
+              <div class="card h-100">
+                <div class="card-header py-2">
+                  <small class="text-uppercase text-muted">
+                    <i class="fa fa-briefcase me-1"></i> Pracovní poměr
+                  </small>
+                </div>
+                <div class="card-body small">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <dl class="row mb-0">
+                        <dt class="col-6">Provoz</dt>
+                        <dd class="col-6">
+                          {{ dotaznik.provoz.nazev|default:"-" }}
+                        </dd>
+
+                        <dt class="col-6">Pozice</dt>
+                        <dd class="col-6">
+                          {{ dotaznik.pozice|default:"-" }}
+                        </dd>
+
+                        <dt class="col-6">Typ poměru</dt>
+                        <dd class="col-6">
+                          {{ dotaznik.get_typ_pomeru_display|default:"-" }}
+                        </dd>
+
+                        <dt class="col-6">Úvazek (FTE)</dt>
+                        <dd class="col-6">
+                          {{ dotaznik.uvazek_fte|default:"-" }}
+                        </dd>
+
+                        <dt class="col-6">Rozvržení doby</dt>
+                        <dd class="col-6">
+                          {{ dotaznik.pracovni_doba_popis|default:"-" }}
+                        </dd>
+                      </dl>
+                    </div>
+                    <div class="col-md-6">
+                      <dl class="row mb-0">
+                        <dt class="col-6">Datum nástupu</dt>
+                        <dd class="col-6">
+                          {% if dotaznik.datum_nastupu %}
+                            {{ dotaznik.datum_nastupu|date:"d.m.Y" }}
+                          {% else %}-{% endif %}
+                        </dd>
+
+                        <dt class="col-6">Doba trvání</dt>
+                        <dd class="col-6">
+                          {{ dotaznik.get_doba_trvani_display|default:"-" }}
+                        </dd>
+
+                        <dt class="col-6">Doba určitá do</dt>
+                        <dd class="col-6">
+                          {% if dotaznik.doba_urcita_do %}
+                            {{ dotaznik.doba_urcita_do|date:"d.m.Y" }}
+                            {% if dotaznik.smlouva_zbyva_dni is not None %}
+                              <span class="text-muted">
+                                (zbývá {{ dotaznik.smlouva_zbyva_dni }} dní)
+                              </span>
+                            {% endif %}
+                          {% else %}-{% endif %}
+                        </dd>
+
+                        <dt class="col-6">Zkušební doba</dt>
+                        <dd class="col-6">
+                          {% if dotaznik.zkusebka_konec %}
+                            do {{ dotaznik.zkusebka_konec|date:"d.m.Y" }}
+                            {% if dotaznik.zbyva_zkusebka_dni is not None %}
+                              <span class="text-muted">
+                                ({{ dotaznik.zbyva_zkusebka_dni }} dní)
+                              </span>
+                            {% endif %}
+                          {% elif dotaznik.zkusebni_doba_mesice %}
+                            {{ dotaznik.zkusebni_doba_mesice }} měs.
+                          {% else %}
+                            -
+                          {% endif %}
+                        </dd>
+
+                        <dt class="col-6">Hrubá mzda</dt>
+                        <dd class="col-6">
+                          {% if dotaznik.mzda_hruba %}
+                            {{ dotaznik.mzda_hruba }} Kč
+                          {% else %}-{% endif %}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {# ADRESY #}
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header py-2">
+                  <small class="text-uppercase text-muted">
+                    <i class="fa fa-map-marker me-1"></i> Adresy
+                  </small>
+                </div>
+                <div class="card-body small">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h6 class="small text-muted">Trvalé bydliště</h6>
+                      <p class="mb-0">
+                        {{ dotaznik.trvale_ulice }} {{ dotaznik.trvale_cislo_popisne }}<br>
+                        {{ dotaznik.trvale_psc }} {{ dotaznik.trvale_mesto }}
+                      </p>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="small text-muted">Doručovací adresa</h6>
+                      {% if dotaznik.dorucovaci_ulice %}
+                        <p class="mb-0">
+                          {{ dotaznik.dorucovaci_ulice }} {{ dotaznik.dorucovaci_cislo_popisne }}<br>
+                          {{ dotaznik.dorucovaci_psc }} {{ dotaznik.dorucovaci_mesto }}
+                        </p>
+                      {% else %}
+                        <p class="mb-0 text-muted">
+                          Shodná s trvalým bydlištěm nebo nevyplněna.
+                        </p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {# VZDĚLÁNÍ & POSLEDNÍ ZAMĚSTNAVATEL #}
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header py-2 d-flex justify-content-between">
+                  <small class="text-uppercase text-muted">
+                    <i class="fa fa-graduation-cap me-1"></i> Vzdělání a praxe
+                  </small>
+                </div>
+                <div class="card-body small">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h6 class="small text-muted">Vzdělání</h6>
+                      <p class="mb-1">
+                        {% if dotaznik.vzdelani_vs %}
+                          Vysoká škola
+                        {% elif dotaznik.vzdelani_gymnazium %}
+                          Gymnázium
+                        {% elif dotaznik.vzdelani_ss %}
+                          Střední škola
+                        {% elif dotaznik.vzdelani_sou %}
+                          Střední odborné učiliště
+                        {% elif dotaznik.vzdelani_zakladni %}
+                          Základní škola
+                        {% else %}
+                          Nevyplněno
+                        {% endif %}
+                      </p>
+                      <p class="mb-0">
+                        {{ dotaznik.vzdelani_skola_nazev }}<br>
+                        {{ dotaznik.vzdelani_mesto_obec }}
+                        {% if dotaznik.vzdelani_rok_ukonceni %}
+                          (ukončeno {{ dotaznik.vzdelani_rok_ukonceni }})
+                        {% endif %}
+                        {% if dotaznik.vzdelani_obor %}
+                          <br>Obor: {{ dotaznik.vzdelani_obor }}
+                        {% endif %}
+                      </p>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="small text-muted">Poslední zaměstnavatel</h6>
+                      {% if dotaznik.posledni_zam_nazev_firmy %}
+                        <p class="mb-0">
+                          {{ dotaznik.posledni_zam_nazev_firmy }}<br>
+                          {{ dotaznik.posledni_zam_pracovni_zarazeni|default:"" }}<br>
+                          Od {{ dotaznik.posledni_zam_od|default:"?" }}
+                          do {{ dotaznik.posledni_zam_do|default:"?" }}
+                        </p>
+                      {% else %}
+                        <p class="mb-0 text-muted">Nevyplněno.</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {# CIZINEC + POJIŠTĚNÍ V CIZINĚ + SRÁŽKY #}
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header py-2 d-flex justify-content-between">
+                  <small class="text-uppercase text-muted">
+                    <i class="fa fa-globe me-1"></i> Cizinec, pojištění, srážky
+                  </small>
+                </div>
+                <div class="card-body small">
+                  <div class="row">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                      <h6 class="small text-muted">Údaje pro cizince</h6>
+                      {% if dotaznik.cizinec_cislo_dokladu %}
+                        <p class="mb-0">
+                          Doklad: {{ dotaznik.cizinec_cislo_dokladu }}<br>
+                          Povolení práce: {{ dotaznik.cizinec_povoleni_prace|default:"-" }}<br>
+                          Pobyt: {{ dotaznik.cizinec_povoleni_pobytu|default:"-" }}<br>
+                          {{ dotaznik.cizinec_adresa_ulice }} {{ dotaznik.cizinec_adresa_cislo }}<br>
+                          {{ dotaznik.cizinec_adresa_psc }} {{ dotaznik.cizinec_adresa_stat_mesto }}
+                        </p>
+                      {% else %}
+                        <p class="mb-0 text-muted">Nevyplněno (není veden jako cizinec).</p>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3 mb-md-0">
+                      <h6 class="small text-muted">Pojištění v cizině</h6>
+                      {% if dotaznik.pojisteni_cizina_byl %}
+                        <p class="mb-0">
+                          Účast v cizině: ano<br>
+                          Nositel pojištění:<br>
+                          {{ dotaznik.pojisteni_cizina_nazev_adresa_nositele|linebreaksbr }}<br>
+                          Číslo pojištění: {{ dotaznik.pojisteni_cizina_cislo_pojisteni|default:"-" }}
+                        </p>
+                      {% else %}
+                        <p class="mb-0 text-muted">Bez účasti na důchodovém pojištění v cizině.</p>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                      <h6 class="small text-muted">Nařízené srážky ze mzdy</h6>
+                      {% if dotaznik.srazky_existuji %}
+                        <p class="mb-0">
+                          <span class="badge bg-danger mb-1">
+                            <i class="fa fa-balance-scale me-1"></i> Srážky existují
+                          </span><br>
+                          Vymáhající orgán:<br>
+                          {{ dotaznik.srazky_vymahajici_orgam_a_cj|linebreaksbr }}<br>
+                          Počet vyživovaných osob: {{ dotaznik.pocet_vyzivovanych_osob }}
+                        </p>
+                      {% else %}
+                        <p class="mb-0 text-muted">
+                          Bez nařízených srážek, vyživované osoby: {{ dotaznik.pocet_vyzivovanych_osob }}.
+                        </p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {# DALŠÍ ÚDAJE + TRESTRAK + ZÁPOČTOVÝ LIST #}
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header py-2">
+                  <small class="text-uppercase text-muted">
+                    <i class="fa fa-info-circle me-1"></i> Další údaje
+                  </small>
+                </div>
+                <div class="card-body small">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <ul class="list-unstyled mb-0">
+                        <li>
+                          {% if dotaznik.zmenena_prac_schopnost %}
+                            <i class="fa fa-check text-success me-1"></i>
+                            Změněná pracovní schopnost
+                          {% else %}
+                            <i class="fa fa-minus text-muted me-1"></i>
+                            Změněná pracovní schopnost: ne
+                          {% endif %}
+                        </li>
+                        <li>
+                          {% if dotaznik.zapoctovy_list_predlozen %}
+                            <i class="fa fa-check text-success me-1"></i>
+                            Zápočtový list předložen
+                          {% else %}
+                            <i class="fa fa-minus text-muted me-1"></i>
+                            Zápočtový list nepředložen
+                          {% endif %}
+                        </li>
+                        <li>
+                          {% if dotaznik.cisty_trestni_rejstrik %}
+                            <i class="fa fa-check text-success me-1"></i>
+                            Čistý trestní rejstřík doložen
+                          {% else %}
+                            <i class="fa fa-exclamation-triangle text-warning me-1"></i>
+                            Čistý trestní rejstřík nedoložen / neuvedeno
+                          {% endif %}
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-6">
+                      {% if dotaznik.duchod_starobni or dotaznik.duchod_invalidni or dotaznik.duchod_predcasny %}
+                        <h6 class="small text-muted">Detail důchodu</h6>
+                        <p class="mb-0">
+                          Datum vzniku nároku:
+                          {{ dotaznik.duchod_datum_vzniku|default:"-" }}<br>
+                          Vyplácí:
+                          {{ dotaznik.duchod_kdo_vyplaci|default:"-" }}<br>
+                          Další informace:
+                          {{ dotaznik.duchod_kdo_dopl_info|default:"-" }}
+                        </p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {# DOKUMENTY + WORKFLOW HISTORIE #}
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                  <small class="text-uppercase text-muted">
+                    <i class="fa fa-file-text-o me-1"></i> Dokumenty a workflow
+                  </small>
+                  <a href="{% url 'frontend:dotaznik_detail_hr' dotaznik.id %}"
+                     class="btn btn-outline-secondary btn-sm">
+                    <i class="fa fa-external-link me-1"></i> HR detail dotazníku
+                  </a>
+                </div>
+                <div class="card-body small">
+                  <div class="row">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                      <h6 class="small text-muted mb-2">
+                        <i class="fa fa-files-o me-1"></i> Vygenerované dokumenty
+                      </h6>
+                      {% with dokumenty=dotaznik.dokumenty.all %}
+                        {% if dokumenty %}
+                          <ul class="list-unstyled mb-0">
+                            {% for doc in dokumenty %}
+                              <li class="mb-1 d-flex justify-content-between align-items-center">
+                                <div>
+                                  <i class="fa fa-file-word-o text-primary me-1"></i>
+                                  {{ doc.nazev|default:"Dokument" }}
+                                  <span class="text-muted">
+                                    ({{ doc.vygenerovano|date:"d.m.Y H:i" }})
+                                  </span>
+                                </div>
+                                <div class="ms-2">
+                                  {% if doc.docx_soubor %}
+                                    <a href="{{ doc.docx_soubor.url }}"
+                                       class="btn btn-outline-primary btn-xs"
+                                       title="DOCX">
+                                      <i class="fa fa-file-word-o"></i>
+                                    </a>
+                                  {% endif %}
+                                  {% if doc.pdf_soubor %}
+                                    <a href="{{ doc.pdf_soubor.url }}"
+                                       class="btn btn-outline-danger btn-xs"
+                                       title="PDF">
+                                      <i class="fa fa-file-pdf-o"></i>
+                                    </a>
+                                  {% endif %}
+                                </div>
+                              </li>
+                            {% endfor %}
+                          </ul>
+                        {% else %}
+                          <p class="mb-0 text-muted">Zatím žádné vygenerované dokumenty.</p>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="small text-muted mb-2">
+                        <i class="fa fa-history me-1"></i> Historie workflow
+                      </h6>
+                      <ul class="list-unstyled mb-0">
+                        <li>
+                          Vytvořil:
+                          <strong>{{ dotaznik.created_by|default:"neznámý" }}</strong>
+                          · {{ dotaznik.created_at|date:"d.m.Y H:i" }}
+                        </li>
+                        {% if dotaznik.odeslal_na_hr %}
+                          <li>
+                            Odesláno na HR:
+                            <strong>{{ dotaznik.odeslal_na_hr }}</strong>
+                            · {{ dotaznik.odeslal_na_hr_at|date:"d.m.Y H:i" }}
+                          </li>
+                        {% endif %}
+                        {% if dotaznik.hr_posledni_kontrola %}
+                          <li>
+                            Poslední HR kontrola:
+                            <strong>{{ dotaznik.hr_posledni_kontrola }}</strong>
+                            · {{ dotaznik.hr_posledni_kontrola_at|date:"d.m.Y H:i" }}
+                          </li>
+                        {% endif %}
+                        {% if dotaznik.hr_vratil_provozu %}
+                          <li>
+                            Vráceno provozu:
+                            <strong>{{ dotaznik.hr_vratil_provozu }}</strong>
+                            · {{ dotaznik.hr_vraceno_provozu_at|date:"d.m.Y H:i" }}
+                          </li>
+                        {% endif %}
+                        {% if dotaznik.hr_schvalil %}
+                          <li>
+                            Schválil HR:
+                            <strong>{{ dotaznik.hr_schvalil }}</strong>
+                            · {{ dotaznik.hr_schvalil_at|date:"d.m.Y H:i" }}
+                          </li>
+                        {% endif %}
+                        <li class="mt-1">
+                          Aktuální stav:
+                          <span class="badge bg-secondary">
+                            {{ dotaznik.get_stav_display }}
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {# PŘÍLOHY #}
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header py-2">
+                  <small class="text-uppercase text-muted">
+                    <i class="fa fa-paperclip me-1"></i> Přiložené soubory
+                  </small>
+                </div>
+                <div class="card-body small">
+                  {% with prilohy=dotaznik.prilohy.all %}
+                    {% if prilohy %}
+                      <ul class="list-unstyled mb-0">
+                        {% for p in prilohy %}
+                          <li class="mb-1 d-flex justify-content-between align-items-center">
+                            <div>
+                              <i class="fa fa-file-o me-1"></i>
+                              {{ p.popis|default:"Příloha" }}
+                              <span class="text-muted">
+                                ({{ p.created_at|date:"d.m.Y H:i" }})
+                              </span>
+                            </div>
+                            {% if p.soubor %}
+                              <a href="{{ p.soubor.url }}"
+                                 class="btn btn-outline-secondary btn-xs">
+                                <i class="fa fa-download"></i>
+                              </a>
+                            {% endif %}
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    {% else %}
+                      <p class="mb-0 text-muted">K dotazníku nejsou přiloženy žádné soubory.</p>
+                    {% endif %}
+                  {% endwith %}
+                </div>
+              </div>
+            </div>
+
+            {# POZNÁMKY #}
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header py-2">
+                  <small class="text-uppercase text-muted">
+                    <i class="fa fa-sticky-note-o me-1"></i> Poznámky
+                  </small>
+                </div>
+                <div class="card-body small">
+                  {% if dotaznik.jine_poznamky %}
+                    <p class="mb-1">{{ dotaznik.jine_poznamky|linebreaksbr }}</p>
+                  {% else %}
+                    <p class="mb-1 text-muted">Bez interních poznámek.</p>
+                  {% endif %}
+                  {% if dotaznik.hr_poznamka_pro_provoz %}
+                    <hr class="my-2">
+                    <div class="text-muted">
+                      <strong>HR poznámka pro provoz:</strong><br>
+                      {{ dotaznik.hr_poznamka_pro_provoz|linebreaksbr }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+          </div> {# /row sekcí #}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

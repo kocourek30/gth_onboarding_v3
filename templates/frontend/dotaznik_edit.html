@@ -539,7 +539,7 @@
       </div>
     </div>
 
-    <!-- Cizinec & pojištění -->
+    <!-- Cizinec + pojištění v cizině -->
     <div id="cizinec" class="card gth-card mb-3">
       <div class="gth-card-header py-2">
         <h6 class="mb-0">
@@ -623,6 +623,7 @@
             </div>
           </div>
         </div>
+
         <div class="row g-2">
           <div class="col-12 col-md-6">
             {{ form.pojisteni_cizina_nazev_adresa_nositele.label_tag }}{{ form.pojisteni_cizina_nazev_adresa_nositele }}
@@ -644,7 +645,7 @@
       </div>
     </div>
 
-    <!-- Srážky & vyživované osoby -->
+    <!-- Srážky a vyživované osoby -->
     <div id="srazky" class="card gth-card mb-3">
       <div class="gth-card-header py-2">
         <h6 class="mb-0">
@@ -672,6 +673,7 @@
             {% endif %}
           </div>
         </div>
+
         <div class="row g-2">
           <div class="col-12">
             {{ form.srazky_vymahajici_orgam_a_cj.label_tag }}{{ form.srazky_vymahajici_orgam_a_cj }}

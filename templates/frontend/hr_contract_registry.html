@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Registr smluv{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="card gth-card">
+    <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <i class="fa fa-address-book-o me-2"></i>
+        <div>
+          <h6 class="mb-0">Registr smluv</h6>
+          <small>Přehled zaměstnanců se smlouvou a mzdovým výměrem.</small>
+        </div>
+      </div>
+      <div class="text-end d-none d-md-block">
+        <small>
+          <i class="fa fa-info-circle me-1"></i>
+          Filtrovat můžete podle jména, provozu i pozice.
+        </small>
+      </div>
+    </div>
+
+    <div class="gth-card-body">
+      <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-md-4 col-lg-3">
+          <label class="form-label small mb-1">
+            <i class="fa fa-search me-1"></i> Hledat
+          </label>
+          <input type="text"
+                 name="q"
+                 value="{{ search }}"
+                 class="form-control form-control-sm"
+                 placeholder="Jméno, provoz nebo pozice…">
+        </div>
+        <div class="col-6 col-md-2 col-lg-1">
+          <label class="form-label small mb-1 d-none d-md-block">&nbsp;</label>
+          <button class="btn btn-primary btn-sm w-100">
+            <i class="fa fa-filter me-1"></i> OK
+          </button>
+        </div>
+        <div class="col-6 col-md-2 col-lg-1">
+          <label class="form-label small mb-1 d-none d-md-block">&nbsp;</label>
+          <a href="{% url 'frontend:hr_contract_registry' %}"
+             class="btn btn-outline-secondary btn-sm w-100">
+            <i class="fa fa-times me-1"></i> Zrušit
+          </a>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-hover table-bordered mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="min-width: 180px;">
+                <i class="fa fa-user me-1"></i> Jméno
+              </th>
+              <th style="min-width: 220px;">
+                <i class="fa fa-building-o me-1"></i> Provoz
+              </th>
+              <th style="min-width: 180px;">
+                <i class="fa fa-briefcase me-1"></i> Pozice
+              </th>
+              <th style="min-width: 120px;">
+                <i class="fa fa-calendar me-1"></i> Nástup
+              </th>
+              <th style="min-width: 160px;">
+                <i class="fa fa-id-card-o me-1"></i> Typ poměru
+              </th>
+              <th style="min-width: 170px;">
+                <i class="fa fa-clock-o me-1"></i> Platnost smlouvy
+              </th>
+              <th style="min-width: 170px;">
+                <i class="fa fa-hourglass-half me-1"></i> Zkušební doba
+              </th>
+              <th class="text-center" style="width: 70px;">
+                <i class="fa fa-ellipsis-h"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in dotazniky %}
+              <tr>
+                <td>
+                  <strong>{{ d.prijmeni }}</strong> {{ d.jmeno }}
+                </td>
+                <td>{{ d.provoz.nazev }}</td>
+                <td>{{ d.pozice }}</td>
+                <td>
+                  {% if d.datum_nastupu %}
+                    {{ d.datum_nastupu|date:"d.m.Y" }}
+                  {% else %}
+                    <span class="text-muted small">Nezadáno</span>
+                  {% endif %}
+                </td>
+                <td>{{ d.get_typ_pomeru_display }}</td>
+
+                {# smlouva na dobu určitou / neurčitou #}
+                <td>
+                  {% if d.doba_urcita_do %}
+                    do {{ d.doba_urcita_do|date:"d.m.Y" }}
+                    {% if d.smlouva_zbyva_dni is not None %}
+                      <span class="text-muted small d-block">
+                        (končí za {{ d.smlouva_zbyva_dni }} dní)
+                      </span>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted small">Na dobu neurčitou</span>
+                  {% endif %}
+                </td>
+
+                {# zkušební doba #}
+                <td>
+                  {% if d.zkusebka_konec %}
+                    do {{ d.zkusebka_konec|date:"d.m.Y" }}
+                    {% if d.zbyva_zkusebka_dni is not None %}
+                      <span class="text-muted small d-block">
+                        (zbývá {{ d.zbyva_zkusebka_dni }} dní)
+                      </span>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted small">Nenastaveno</span>
+                  {% endif %}
+                </td>
+
+                <td class="text-center">
+                  <a href="{% url 'frontend:employee_detail' d.id %}"
+                     class="btn btn-outline-secondary btn-sm"
+                     title="Detail zaměstnance">
+                    <i class="fa fa-user"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-3">
+                  Zatím žádné zaměstnance s vygenerovaným dokumentem.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

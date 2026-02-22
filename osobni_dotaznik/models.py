@@ -1,7 +1,9 @@
 import os
+from datetime import date
 
-from django.db import models
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
+from django.db import models
 
 
 class OsobniDotaznik(models.Model):
@@ -117,11 +119,11 @@ class OsobniDotaznik(models.Model):
         "Telefon",
         max_length=50,
         blank=True,
-    )  # * nepovinné
+    )  # nepovinné
     email = models.EmailField(
         "E-mail",
         blank=True,
-    )  # * nepovinné
+    )  # nepovinné
     rodne_cislo = models.CharField(
         "Rodné číslo",
         max_length=20,
@@ -401,15 +403,6 @@ class OsobniDotaznik(models.Model):
         blank=True,
     )
 
-    created_by = models.ForeignKey(
-        User,
-        verbose_name="Vytvořil uživatel",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="dotazniky_vytvorene",
-    )
-
     odeslal_na_hr = models.ForeignKey(
         User,
         verbose_name="Odeslal na HR",
@@ -466,11 +459,6 @@ class OsobniDotaznik(models.Model):
         blank=True,
     )
 
-    hr_poznamka_pro_provoz = models.TextField(
-        "Poznámka HR pro provoz",
-        blank=True,
-    )
-
     # Potvrzení
     potvrzeni_podpis_text = models.TextField(
         "Text k podpisu zaměstnance",
@@ -500,6 +488,7 @@ class OsobniDotaznik(models.Model):
         blank=True,
         help_text="Např. 25000.00 nebo hodinová sazba",
     )
+
     DOBA_NEURCITA = "neurcita"
     DOBA_URCITA = "urcita"
     DOBA_TRVANI_CHOICES = [
@@ -534,6 +523,25 @@ class OsobniDotaznik(models.Model):
         help_text="Např. 3 měsíce",
     )
 
+    @property
+    def smlouva_zbyva_dni(self):
+        if not self.doba_urcita_do:
+            return None
+        return (self.doba_urcita_do - date.today()).days
+
+    @property
+    def zkusebka_konec(self):
+        if not self.datum_nastupu or not self.zkusebni_doba_mesice:
+            return None
+        return self.datum_nastupu + relativedelta(months=self.zkusebni_doba_mesice)
+
+    @property
+    def zbyva_zkusebka_dni(self):
+        end = self.zkusebka_konec
+        if not end:
+            return None
+        return (end - date.today()).days
+
     def __str__(self):
         cele_jmeno = f"{self.jmeno} {self.prijmeni}"
         if self.titul:
@@ -561,7 +569,6 @@ class OsobniDotaznikPriloha(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-# models.py
 def dokument_upload_to(instance, filename):
     provoz = instance.dotaznik.provoz
     if provoz and getattr(provoz, "cislo_provozu", None):
@@ -582,9 +589,11 @@ class GenerovanyDokument(models.Model):
         on_delete=models.CASCADE,
         related_name="dokumenty",
     )
-    typ = models.CharField(max_length=100, choices=[("mzdovy_vymer", "Mzdový výměr")])
+    typ = models.CharField(
+        max_length=100,
+        choices=[("mzdovy_vymer", "Mzdový výměr")],
+    )
     nazev = models.CharField(max_length=255, blank=True)
     docx_soubor = models.FileField(upload_to=dokument_upload_to, blank=True)
     pdf_soubor = models.FileField(upload_to=dokument_upload_to, blank=True)
     vygenerovano = models.DateTimeField(auto_now_add=True)
-
