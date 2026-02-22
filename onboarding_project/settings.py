@@ -116,3 +116,7 @@ USE_TZ = True                 # doporučeno nechat True – ukládá v DB v UTC
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+

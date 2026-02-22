@@ -56,6 +56,12 @@ path("hr/dotaznik/<int:dotaznik_id>/vratit-provozu/",
      name="hr_vratit_provozu"),
 
 
+    path('dotaznik/<int:dotaznik_id>/generovat-mzdovy-vymer/', views.generovat_mzdovy_vymer, name='generovat_mzdovy_vymer'),
+    path("hr/dokument/<int:dokument_id>/delete/", views.dokument_delete, name="dokument_delete"),
+
+
+
+
 
 
 

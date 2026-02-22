@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from django.http import HttpResponseRedirect
 
 from core.models import UserProfile, Provoz, Pozice
-from osobni_dotaznik.models import OsobniDotaznik, OsobniDotaznikPriloha
+from osobni_dotaznik.models import GenerovanyDokument, OsobniDotaznik, OsobniDotaznikPriloha
 from .forms import StartDotaznikForm, OsobniDotaznikEditForm, PrilohaForm
 from django.utils import timezone
 
@@ -75,9 +75,14 @@ def dotaznik_detail_hr(request, dotaznik_id):
         povinne_chybi.append("Trvalé bydliště")
 
     muze_generovat = (len(povinne_chybi) == 0)
+
+    # vygenerované dokumenty k dotazníku (mzdové výměry, smlouvy, ...)
+    dokumenty = dotaznik.dokumenty.order_by("-vygenerovano")
+
     dotaznik.hr_posledni_kontrola = request.user
     dotaznik.hr_posledni_kontrola_at = timezone.now()
     dotaznik.save(update_fields=["hr_posledni_kontrola", "hr_posledni_kontrola_at"])
+
     return render(
         request,
         "frontend/dotaznik_detail_hr.html",
@@ -85,8 +90,10 @@ def dotaznik_detail_hr(request, dotaznik_id):
             "dotaznik": dotaznik,
             "povinne_chybi": povinne_chybi,
             "muze_generovat": muze_generovat,
+            "dokumenty": dokumenty,
         },
     )
+
 
 
 @login_required
@@ -481,4 +488,102 @@ def hr_vratit_provozu(request, dotaznik_id):
     dotaznik.save()
 
     return redirect("frontend:hr_dashboard")
+from docxtpl import DocxTemplate
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse
+from django.core.files.storage import default_storage
+from io import BytesIO
+import os
+import uuid
 
+
+@login_required
+def generovat_mzdovy_vymer(request, dotaznik_id):
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+
+    template_path = os.path.join(
+        settings.BASE_DIR,
+        "templates",
+        "dokumenty",
+        "mzdovy_vymer.docx",
+    )
+    if not os.path.exists(template_path):
+        raise FileNotFoundError(f"Šablona DOCX nenalezena: {template_path}")
+
+    doc = DocxTemplate(template_path)
+
+    context = {
+        "first_name": dotaznik.jmeno or "",
+        "last_name": dotaznik.prijmeni or "",
+        "date_of_birth": dotaznik.datum_narozeni.strftime("%d.%m.%Y")
+        if dotaznik.datum_narozeni
+        else "",
+        "workplace_name": dotaznik.provoz.nazev if dotaznik.provoz else "",
+        "workplace_address": getattr(dotaznik.provoz, "adresa", "")
+        if dotaznik.provoz
+        else "",
+        "wage_effective_from": dotaznik.datum_nastupu.strftime("%d.%m.%Y")
+        if dotaznik.datum_nastupu
+        else "",
+        "base_salary": (
+            f"{dotaznik.mzda_hruba:,.0f}".replace(",", " ")
+            if dotaznik.mzda_hruba
+            else "0"
+        ),
+        "variable_salary": "0",
+    }
+
+    doc.render(context)
+
+    docx_io = BytesIO()
+    doc.save(docx_io)
+    docx_io.seek(0)
+
+    # název souboru
+    safe_jmeno = (dotaznik.jmeno or "").strip().replace(" ", "_")
+    safe_prijmeni = (dotaznik.prijmeni or "").strip().replace(" ", "_")
+    uniq = uuid.uuid4().hex[:6]
+    filename_base = f"mzdovy_vymer_{safe_prijmeni}_{safe_jmeno}_{uniq}"
+
+    # get_or_create dokument
+    dokument, created = GenerovanyDokument.objects.get_or_create(
+        dotaznik=dotaznik,
+        typ="mzdovy_vymer",
+        defaults={
+            "nazev": f"Mzdový výměr {dotaznik.prijmeni} {dotaznik.jmeno}",
+        },
+    )
+
+    # smazat starý soubor, pokud existuje
+    if dokument.docx_soubor:
+        default_storage.delete(dokument.docx_soubor.name)
+
+    dokument.nazev = f"Mzdový výměr {dotaznik.prijmeni} {dotaznik.jmeno}"
+    
+    # uložit nový soubor (jen JEDNOU!)
+    dokument.docx_soubor.save(
+        f"{filename_base}.docx",
+        ContentFile(docx_io.read()),
+        save=True,
+    )
+
+    url = reverse("frontend:dotaznik_detail_hr", kwargs={"dotaznik_id": dotaznik.id})
+    return redirect(f"{url}#dokumenty")
+
+
+@login_required
+def dokument_delete(request, dokument_id):
+    dokument = get_object_or_404(GenerovanyDokument, id=dokument_id)
+    dotaznik_id = dokument.dotaznik_id
+
+    if request.method == "POST":
+        if dokument.docx_soubor:
+            dokument.docx_soubor.delete(save=False)
+        if dokument.pdf_soubor:
+            dokument.pdf_soubor.delete(save=False)
+        dokument.delete()
+
+    return redirect("frontend:dotaznik_detail_hr", dotaznik_id=dotaznik_id)

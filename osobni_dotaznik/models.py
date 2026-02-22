@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -558,4 +560,31 @@ class OsobniDotaznikPriloha(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+# models.py
+def dokument_upload_to(instance, filename):
+    provoz = instance.dotaznik.provoz
+    if provoz and getattr(provoz, "cislo_provozu", None):
+        provoz_code = str(provoz.cislo_provozu)
+    else:
+        provoz_code = "neznamy_provoz"
+
+    jmeno = (instance.dotaznik.jmeno or "").strip().replace(" ", "_")
+    prijmeni = (instance.dotaznik.prijmeni or "").strip().replace(" ", "_")
+
+    base, ext = os.path.splitext(filename)
+    return f"dokumenty/{provoz_code}/{jmeno}_{prijmeni}/{base}{ext}"
+
+
+class GenerovanyDokument(models.Model):
+    dotaznik = models.ForeignKey(
+        OsobniDotaznik,
+        on_delete=models.CASCADE,
+        related_name="dokumenty",
+    )
+    typ = models.CharField(max_length=100, choices=[("mzdovy_vymer", "Mzdový výměr")])
+    nazev = models.CharField(max_length=255, blank=True)
+    docx_soubor = models.FileField(upload_to=dokument_upload_to, blank=True)
+    pdf_soubor = models.FileField(upload_to=dokument_upload_to, blank=True)
+    vygenerovano = models.DateTimeField(auto_now_add=True)
 
