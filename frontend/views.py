@@ -623,6 +623,9 @@ def dokument_delete(request, dokument_id):
 from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 from osobni_dotaznik.models import OsobniDotaznik, GenerovanyDokument
+from datetime import timedelta
+from django.db.models import Exists, OuterRef, Q
+from django.utils import timezone
 
 @login_required
 def hr_contract_registry(request):
@@ -637,6 +640,7 @@ def hr_contract_registry(request):
         typ="mzdovy_vymer",
     )
 
+    # základní set – všichni se schváleným dotazníkem a dokumentem
     dotazniky = (
         OsobniDotaznik.objects.annotate(
             has_doc=Exists(q_docs),
@@ -658,13 +662,38 @@ def hr_contract_registry(request):
             | Q(pozice__nazev__icontains=search)
         )
 
+    # --- brzy končící smlouvy / zkušebky ---
+    KONCI_DO_DNI = 30
+    end_limit = today + timedelta(days=KONCI_DO_DNI)
+
+    koncici_smlouvy = (
+        dotazniky.filter(
+            doba_urcita_do__isnull=False,
+            doba_urcita_do__gte=today,
+            doba_urcita_do__lte=end_limit,
+        )
+        .order_by("doba_urcita_do", "prijmeni", "jmeno")[:50]
+    )
+
+    koncici_zkusebky = (
+        dotazniky.filter(
+            zkusebka_konec__isnull=False,
+            zkusebka_konec__gte=today,
+            zkusebka_konec__lte=end_limit,
+        )
+        .order_by("zkusebka_konec", "prijmeni", "jmeno")[:50]
+    )
+
     context = {
         "dotazniky": dotazniky,
         "search": search,
         "today": today,
+        "koncici_smlouvy": koncici_smlouvy,
+        "koncici_zkusebky": koncici_zkusebky,
     }
     return render(request, "frontend/hr_contract_registry.html", context)
 
+from datetime import timedelta
 
 @login_required
 def provoz_contract_registry(request):
@@ -703,12 +732,36 @@ def provoz_contract_registry(request):
             | Q(pozice__nazev__icontains=search)
         )
 
+    KONCI_DO_DNI = 30
+    end_limit = today + timedelta(days=KONCI_DO_DNI)
+
+    koncici_smlouvy = (
+        dotazniky.filter(
+            doba_urcita_do__isnull=False,
+            doba_urcita_do__gte=today,
+            doba_urcita_do__lte=end_limit,
+        )
+        .order_by("doba_urcita_do", "prijmeni", "jmeno")[:50]
+    )
+
+    koncici_zkusebky = (
+        dotazniky.filter(
+            zkusebka_konec__isnull=False,
+            zkusebka_konec__gte=today,
+            zkusebka_konec__lte=end_limit,
+        )
+        .order_by("zkusebka_konec", "prijmeni", "jmeno")[:50]
+    )
+
     context = {
         "dotazniky": dotazniky,
         "search": search,
         "today": today,
+        "koncici_smlouvy": koncici_smlouvy,
+        "koncici_zkusebky": koncici_zkusebky,
     }
     return render(request, "frontend/hr_contract_registry.html", context)
+
 
 # views.py
 from django.contrib.auth.decorators import login_required

@@ -523,6 +523,12 @@ class OsobniDotaznik(models.Model):
         help_text="Např. 3 měsíce",
     )
 
+    zkusebka_konec = models.DateField(
+        "Konec zkušební doby",
+        null=True,
+        blank=True,
+    )
+
     @property
     def smlouva_zbyva_dni(self):
         if not self.doba_urcita_do:
@@ -530,7 +536,7 @@ class OsobniDotaznik(models.Model):
         return (self.doba_urcita_do - date.today()).days
 
     @property
-    def zkusebka_konec(self):
+    def zkusebka_konec_vypocet(self):
         if not self.datum_nastupu or not self.zkusebni_doba_mesice:
             return None
         return self.datum_nastupu + relativedelta(months=self.zkusebni_doba_mesice)
@@ -541,6 +547,17 @@ class OsobniDotaznik(models.Model):
         if not end:
             return None
         return (end - date.today()).days
+
+    def save(self, *args, **kwargs):
+        # automatický výpočet konce zkušební doby do DB pole
+        if self.datum_nastupu and self.zkusebni_doba_mesice:
+            self.zkusebka_konec = (
+                self.datum_nastupu
+                + relativedelta(months=self.zkusebni_doba_mesice)
+            )
+        else:
+            self.zkusebka_konec = None
+        super().save(*args, **kwargs)
 
     def __str__(self):
         cele_jmeno = f"{self.jmeno} {self.prijmeni}"
