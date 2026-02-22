@@ -7,14 +7,14 @@ class OsobniDotaznik(models.Model):
     STAV_DRAFT = "draft"
     STAV_PROVOZ_ODESLAL = "provoz_odeslal"
     STAV_HR_KONTROLUJE = "hr_kontroluje"
-    STAV_HR_SCHVALENO = "hr_schvaleno"
-    STAV_VRACENO_PROVOZU = "vraceno_provoz"
+    STAV_HR_SCHVALIL = "hr_schvalil"
+    STAV_VRACENO_PROVOZU = "vraceno_provozu"
 
     STAVY_CHOICES = [
         (STAV_DRAFT, "Rozpracovaný (provoz)"),
         (STAV_PROVOZ_ODESLAL, "Odesláno z provozu"),
         (STAV_HR_KONTROLUJE, "HR kontroluje"),
-        (STAV_HR_SCHVALENO, "Schváleno HR"),
+        (STAV_HR_SCHVALIL, "Schváleno HR"),
         (STAV_VRACENO_PROVOZU, "Vráceno na doplnění provozu"),
     ]
 
@@ -162,27 +162,27 @@ class OsobniDotaznik(models.Model):
         max_length=20,
     )
 
+    # Doručovací adresa
     dorucovaci_ulice = models.CharField(
         "Doručovací adresa – ulice",
         max_length=255,
-        blank=True,  # ← přidat
+        blank=True,
     )
     dorucovaci_cislo_popisne = models.CharField(
         "Doručovací adresa – číslo popisné/orientační",
         max_length=50,
-        blank=True,  # ← přidat
+        blank=True,
     )
     dorucovaci_mesto = models.CharField(
         "Doručovací adresa – město/obec",
         max_length=255,
-        blank=True,  # ← přidat
+        blank=True,
     )
     dorucovaci_psc = models.CharField(
         "Doručovací adresa – PSČ",
         max_length=20,
-        blank=True,  # ← přidat
+        blank=True,
     )
-
 
     # Informace o pobírání důchodu
     duchod_predcasny = models.BooleanField(
@@ -394,6 +394,80 @@ class OsobniDotaznik(models.Model):
         "Jiné (poznámky)",
         blank=True,
     )
+    hr_poznamka_pro_provoz = models.TextField(
+        "Poznámka HR pro provoz",
+        blank=True,
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        verbose_name="Vytvořil uživatel",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dotazniky_vytvorene",
+    )
+
+    odeslal_na_hr = models.ForeignKey(
+        User,
+        verbose_name="Odeslal na HR",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dotazniky_odeslane_na_hr",
+    )
+    odeslal_na_hr_at = models.DateTimeField(
+        "Odesláno na HR",
+        null=True,
+        blank=True,
+    )
+
+    hr_posledni_kontrola = models.ForeignKey(
+        User,
+        verbose_name="Poslední kontrola HR",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dotazniky_kontrolovane_hr",
+    )
+    hr_posledni_kontrola_at = models.DateTimeField(
+        "Datum poslední HR kontroly",
+        null=True,
+        blank=True,
+    )
+
+    hr_schvalil = models.ForeignKey(
+        User,
+        verbose_name="Schválil HR",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dotazniky_schvalene_hr",
+    )
+    hr_schvalil_at = models.DateTimeField(
+        "Datum schválení HR",
+        null=True,
+        blank=True,
+    )
+
+    hr_vratil_provozu = models.ForeignKey(
+        User,
+        verbose_name="Vrátil na provoz",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dotazniky_vracene_provozu_hr",
+    )
+    hr_vraceno_provozu_at = models.DateTimeField(
+        "Datum vrácení na provoz",
+        null=True,
+        blank=True,
+    )
+
+    hr_poznamka_pro_provoz = models.TextField(
+        "Poznámka HR pro provoz",
+        blank=True,
+    )
 
     # Potvrzení
     potvrzeni_podpis_text = models.TextField(
@@ -401,7 +475,7 @@ class OsobniDotaznik(models.Model):
         blank=True,
     )
 
-        # Pracovní zařazení / nastavení
+    # Pracovní zařazení / nastavení
     uvazek_fte = models.DecimalField(
         "Úvazek (FTE)",
         max_digits=4,
@@ -425,7 +499,6 @@ class OsobniDotaznik(models.Model):
         help_text="Např. 25000.00 nebo hodinová sazba",
     )
 
-
     def __str__(self):
         cele_jmeno = f"{self.jmeno} {self.prijmeni}"
         if self.titul:
@@ -442,8 +515,8 @@ class OsobniDotaznikPriloha(models.Model):
     soubor = models.FileField(
         upload_to="dotaznik_prilohy/",
         verbose_name="Soubor",
-        blank=True,  # ← klíčové
-        null=True,   # (volitelné, ale pomůže)
+        blank=True,
+        null=True,
     )
     popis = models.CharField(
         "Popis (např. OP, potvrzení, ...)",
@@ -451,4 +524,5 @@ class OsobniDotaznikPriloha(models.Model):
         blank=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
 

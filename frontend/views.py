@@ -5,23 +5,148 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.http import HttpResponseRedirect
 
 from core.models import UserProfile, Provoz, Pozice
 from osobni_dotaznik.models import OsobniDotaznik, OsobniDotaznikPriloha
 from .forms import StartDotaznikForm, OsobniDotaznikEditForm, PrilohaForm
+from django.utils import timezone
 
+# --- HR část -------------------------------------------------------------
 
 @login_required
 def hr_dashboard(request):
-    return render(request, "frontend/hr_dashboard.html")
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role != "hr":
+        return redirect("frontend:provoz_dashboard")
 
+    dotazniky_nove = OsobniDotaznik.objects.filter(
+        stav=OsobniDotaznik.STAV_PROVOZ_ODESLAL
+    ).order_by("-created_at")
+
+    dotazniky_hr_kontroluje = OsobniDotaznik.objects.filter(
+        stav=OsobniDotaznik.STAV_HR_KONTROLUJE
+    ).order_by("-updated_at")
+
+    dotazniky_schvalene = OsobniDotaznik.objects.filter(
+        stav=OsobniDotaznik.STAV_HR_SCHVALIL
+    ).order_by("-updated_at")
+
+    dotazniky_vracene_provozu = OsobniDotaznik.objects.filter(
+        stav=OsobniDotaznik.STAV_VRACENO_PROVOZU
+    ).order_by("-updated_at")
+
+    context = {
+        "dotazniky_nove": dotazniky_nove,
+        "dotazniky_hr_kontroluje": dotazniky_hr_kontroluje,
+        "dotazniky_schvalene": dotazniky_schvalene,
+        "dotazniky_vracene_provozu": dotazniky_vracene_provozu,
+    }
+    return render(request, "frontend/hr_dashboard.html", context)
+
+
+@login_required
+def dotaznik_detail_hr(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role != "hr":
+        return redirect("frontend:provoz_dashboard")
+
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+
+    povolene_stavy = [
+        OsobniDotaznik.STAV_PROVOZ_ODESLAL,
+        OsobniDotaznik.STAV_HR_KONTROLUJE,
+        OsobniDotaznik.STAV_HR_SCHVALIL,
+        OsobniDotaznik.STAV_VRACENO_PROVOZU,
+    ]
+    if dotaznik.stav not in povolene_stavy:
+        return redirect("frontend:hr_dashboard")
+
+    povinne_chybi = []
+    if not dotaznik.jmeno:
+        povinne_chybi.append("Jméno")
+    if not dotaznik.prijmeni:
+        povinne_chybi.append("Příjmení")
+    if not dotaznik.rodne_cislo:
+        povinne_chybi.append("Rodné číslo")
+    if not dotaznik.cislo_uctu:
+        povinne_chybi.append("Číslo účtu")
+    if not dotaznik.trvale_ulice or not dotaznik.trvale_mesto or not dotaznik.trvale_psc:
+        povinne_chybi.append("Trvalé bydliště")
+
+    muze_generovat = (len(povinne_chybi) == 0)
+    dotaznik.hr_posledni_kontrola = request.user
+    dotaznik.hr_posledni_kontrola_at = timezone.now()
+    dotaznik.save(update_fields=["hr_posledni_kontrola", "hr_posledni_kontrola_at"])
+    return render(
+        request,
+        "frontend/dotaznik_detail_hr.html",
+        {
+            "dotaznik": dotaznik,
+            "povinne_chybi": povinne_chybi,
+            "muze_generovat": muze_generovat,
+        },
+    )
+
+
+@login_required
+@require_POST
+def hr_generate_contract(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role != "hr":
+        return redirect("frontend:provoz_dashboard")
+
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+
+    # TODO: vlastní generování smlouvy + dalších dokumentů (uložení příloh, logování apod.)
+
+    # po úspěšném generování označíme jako schválené / připravené k podpisu
+    dotaznik.stav = OsobniDotaznik.STAV_HR_SCHVALIL
+    dotaznik.hr_schvalil = request.user
+    dotaznik.hr_schvalil_at = timezone.now()
+    dotaznik.save()
+
+    return redirect("frontend:dotaznik_detail_hr", dotaznik_id=dotaznik.id)
+
+
+@login_required
+@require_POST
+def hr_generate_wage_doc(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role != "hr":
+        return redirect("frontend:provoz_dashboard")
+
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+    # TODO: generování mzdového dokumentu
+    return redirect("frontend:dotaznik_detail_hr", dotaznik_id=dotaznik.id)
+
+
+@login_required
+@require_POST
+def hr_schvalit_dotaznik(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role != "hr":
+        return redirect("frontend:provoz_dashboard")
+
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+
+    dotaznik.stav = OsobniDotaznik.STAV_HR_SCHVALIL
+    dotaznik.hr_schvalil = request.user
+    dotaznik.hr_schvalil_at = timezone.now()
+    dotaznik.save()
+    return redirect("frontend:hr_dashboard")
+
+
+# --- Provoz část ---------------------------------------------------------
 
 @login_required
 def provoz_dashboard(request):
     profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
 
     moje_provozy = Provoz.objects.none()
-    if profil and profil.spravovane_provozy.exists():
+    if profil.spravovane_provozy.exists():
         moje_provozy = profil.spravovane_provozy.all().order_by(
             "cislo_provozu",
             "nazev",
@@ -31,6 +156,10 @@ def provoz_dashboard(request):
         start_form = StartDotaznikForm(request.POST, user=request.user)
         if start_form.is_valid():
             provoz = start_form.cleaned_data["provoz"]
+
+            # bezpečnost: provoz musí být mezi spravovanými
+            if not profil.spravovane_provozy.filter(id=provoz.id).exists():
+                return redirect("frontend:provoz_dashboard")
 
             dotaznik = OsobniDotaznik.objects.create(
                 provoz=provoz,
@@ -59,7 +188,6 @@ def provoz_dashboard(request):
 
     provozy_ids = moje_provozy.values_list("id", flat=True)
 
-    # rozpracované (draft + vráceno na doplnění provozu)
     dotazniky_rozpracovane = OsobniDotaznik.objects.filter(
         provoz_id__in=provozy_ids,
         stav__in=[
@@ -68,7 +196,6 @@ def provoz_dashboard(request):
         ],
     ).order_by("-created_at")
 
-    # odeslané / ve workflow (cokoli jiného než draft/vráceno)
     dotazniky_odeslane = OsobniDotaznik.objects.filter(
         provoz_id__in=provozy_ids,
     ).exclude(
@@ -89,11 +216,12 @@ def provoz_dashboard(request):
 
 @login_required
 def dotaznik_edit(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
+
     dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
 
-    # provoz / oblastní mohou editovat:
-    # - draft
-    # - vráceno na doplnění provozu
     povolene_stavy = [
         OsobniDotaznik.STAV_DRAFT,
         OsobniDotaznik.STAV_VRACENO_PROVOZU,
@@ -101,14 +229,10 @@ def dotaznik_edit(request, dotaznik_id):
     if dotaznik.stav not in povolene_stavy:
         return redirect("frontend:provoz_dashboard")
 
-    # volitelně: kontrola, že user má k dotazníku přístup (spravované provozy)
-    profil = getattr(request.user, "profile", None)
-    if profil and profil.spravovane_provozy.exists():
-        if dotaznik.provoz not in profil.spravovane_provozy.all():
-            return redirect("frontend:provoz_dashboard")
+    if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
+        return redirect("frontend:provoz_dashboard")
 
     if request.method == "POST":
-        # rozlišíme akci podle jména tlačítka
         if "ulozit_dotaznik" in request.POST:
             form = OsobniDotaznikEditForm(request.POST, instance=dotaznik)
             priloha_form = PrilohaForm()
@@ -119,7 +243,6 @@ def dotaznik_edit(request, dotaznik_id):
             else:
                 print("FORM ERRORS:", form.errors.as_json())
         elif "pridat_prilohu" in request.POST:
-            # při nahrávání přílohy hlavní form vůbec nevalidujeme
             form = OsobniDotaznikEditForm(instance=dotaznik)
             priloha_form = PrilohaForm(request.POST, request.FILES)
             if priloha_form.is_valid():
@@ -128,7 +251,6 @@ def dotaznik_edit(request, dotaznik_id):
                 pridana.save()
                 return redirect("frontend:dotaznik_edit", dotaznik_id=dotaznik.id)
         else:
-            # fallback – kdyby přišel POST bez známého tlačítka
             form = OsobniDotaznikEditForm(request.POST, instance=dotaznik)
             priloha_form = PrilohaForm()
     else:
@@ -153,10 +275,16 @@ def simple_logout(request):
 
 @login_required
 def dotaznik_delete(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
+
     dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
 
-    # bezpečnost: smažeme jen drafty
     if dotaznik.stav != OsobniDotaznik.STAV_DRAFT:
+        return redirect("frontend:provoz_dashboard")
+
+    if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
         return redirect("frontend:provoz_dashboard")
 
     if request.method == "POST":
@@ -172,20 +300,20 @@ def dotaznik_delete(request, dotaznik_id):
 
 @login_required
 def dotaznik_kontrola(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
+
     dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
 
-    # provoz může kontrolovat jen draft NEBO vrácený dotazník
     if dotaznik.stav not in [
         OsobniDotaznik.STAV_DRAFT,
         OsobniDotaznik.STAV_VRACENO_PROVOZU,
     ]:
         return redirect("frontend:provoz_dashboard")
 
-    # volitelně: kontrola přístupu podle provozu
-    profil = getattr(request.user, "profile", None)
-    if profil and profil.spravovane_provozy.exists():
-        if dotaznik.provoz not in profil.spravovane_provozy.all():
-            return redirect("frontend:provoz_dashboard")
+    if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
+        return redirect("frontend:provoz_dashboard")
 
     return render(
         request,
@@ -197,37 +325,38 @@ def dotaznik_kontrola(request, dotaznik_id):
 @login_required
 @require_POST
 def dotaznik_odeslat_hr(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
+
     dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
 
-    # odeslat na HR půjde:
-    # - z draftu
-    # - z vráceného provozu (po doplnění)
     if dotaznik.stav not in [
         OsobniDotaznik.STAV_DRAFT,
         OsobniDotaznik.STAV_VRACENO_PROVOZU,
     ]:
         return redirect("frontend:provoz_dashboard")
 
-    # volitelně: kontrola přístupu podle provozu
-    profil = getattr(request.user, "profile", None)
-    if profil and profil.spravovane_provozy.exists():
-        if dotaznik.provoz not in profil.spravovane_provozy.all():
-            return redirect("frontend:provoz_dashboard")
+    if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
+        return redirect("frontend:provoz_dashboard")
 
     dotaznik.stav = OsobniDotaznik.STAV_PROVOZ_ODESLAL
+    dotaznik.odeslal_na_hr = request.user
+    dotaznik.odeslal_na_hr_at = timezone.now()
     dotaznik.save()
     return redirect("frontend:provoz_dashboard")
 
 
 @login_required
 def dotaznik_detail_provoz(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
+
     dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
 
-    # volitelně: kontrola, že jde o „jeho“ provoz
-    profil = getattr(request.user, "profile", None)
-    if profil and profil.spravovane_provozy.exists():
-        if dotaznik.provoz not in profil.spravovane_provozy.all():
-            return redirect("frontend:provoz_dashboard")
+    if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
+        return redirect("frontend:provoz_dashboard")
 
     return render(
         request,
@@ -236,19 +365,18 @@ def dotaznik_detail_provoz(request, dotaznik_id):
     )
 
 
-from django.http import HttpResponseRedirect
-
 @login_required
 @require_POST
 def priloha_delete(request, priloha_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
+
     priloha = get_object_or_404(OsobniDotaznikPriloha, id=priloha_id)
     dotaznik = priloha.dotaznik
 
-    # kontrola, že user má k dotazníku přístup
-    profil = getattr(request.user, "profile", None)
-    if profil and profil.spravovane_provozy.exists():
-        if dotaznik.provoz not in profil.spravovane_provozy.all():
-            return redirect("frontend:provoz_dashboard")
+    if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
+        return redirect("frontend:provoz_dashboard")
 
     print("Mazání přílohy:", priloha.id, priloha.soubor.name)
     priloha.delete()
@@ -274,16 +402,19 @@ class RoleBasedLoginView(LoginView):
             return reverse("frontend:provoz_dashboard")
 
         return reverse("admin:index")
-    
+
+
 @login_required
 @require_POST
 def priloha_add(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager"):
+        return redirect("frontend:hr_dashboard")
+
     dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
 
-    profil = getattr(request.user, "profile", None)
-    if profil and profil.spravovane_provozy.exists():
-        if dotaznik.provoz not in profil.spravovane_provozy.all():
-            return redirect("frontend:provoz_dashboard")
+    if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
+        return redirect("frontend:provoz_dashboard")
 
     form = PrilohaForm(request.POST, request.FILES)
     if form.is_valid():
@@ -292,4 +423,52 @@ def priloha_add(request, dotaznik_id):
         priloha.save()
 
     return redirect("frontend:dotaznik_edit", dotaznik_id=dotaznik.id)
+
+
+from django.http import FileResponse
+import mimetypes
+
+@login_required
+def priloha_download(request, priloha_id):
+    profil = getattr(request.user, "profile", None)
+    # provoz i HR mají mít přístup – uprav podle potřeby
+    if not profil or profil.role not in ("manager_provozu", "oblastni_manager", "hr"):
+        return redirect("frontend:login")
+
+    priloha = get_object_or_404(OsobniDotaznikPriloha, id=priloha_id)
+    dotaznik = priloha.dotaznik
+
+    # kontrola provozu pro provozní role
+    if profil.role in ("manager_provozu", "oblastni_manager"):
+        if not profil.spravovane_provozy.filter(id=dotaznik.provoz_id).exists():
+            return redirect("frontend:provoz_dashboard")
+
+    # HR může všechny – pokud chceš omezit, přidej logiku
+
+    filename = priloha.soubor.name.split("/")[-1]
+    content_type, _ = mimetypes.guess_type(filename)
+
+    response = FileResponse(priloha.soubor.open("rb"), as_attachment=True, filename=filename)
+    if content_type:
+        response["Content-Type"] = content_type
+    return response
+
+@login_required
+@require_POST
+def hr_vratit_provozu(request, dotaznik_id):
+    profil = getattr(request.user, "profile", None)
+    if not profil or profil.role != "hr":
+        return redirect("frontend:provoz_dashboard")
+
+    dotaznik = get_object_or_404(OsobniDotaznik, id=dotaznik_id)
+
+    poznamka = request.POST.get("hr_poznamka_pro_provoz", "").strip()
+
+    dotaznik.hr_poznamka_pro_provoz = poznamka
+    dotaznik.stav = OsobniDotaznik.STAV_VRACENO_PROVOZU
+    dotaznik.hr_vratil_provozu = request.user
+    dotaznik.hr_vraceno_provozu_at = timezone.now()
+    dotaznik.save()
+
+    return redirect("frontend:hr_dashboard")
 

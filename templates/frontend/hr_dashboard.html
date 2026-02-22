@@ -3,15 +3,207 @@
 {% block title %}HR dashboard | Onboarding GTH{% endblock %}
 
 {% block content %}
-<div class="mt-4">
+<div class="container-fluid py-3">
   <h3>HR dashboard</h3>
   <p class="text-muted">
-    Přehled osobních dotazníků určených pro kontrolu a schválení HR.
+    Přehled osobních dotazníků určených pro kontrolu, schválení a generování dokumentů.
   </p>
 
-  <div class="alert alert-info">
-    Tady později zobrazíme seznam dotazníků ve stavech
-    <strong>Odesláno z provozu</strong> a <strong>HR kontroluje</strong>.
+  <!-- NOVÉ Z PROVOZU -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">Nové osobní dotazníky z provozu</h6>
+      <span class="badge bg-primary">{{ dotazniky_nove|length }}</span>
+    </div>
+    <div class="gth-card-body py-3">
+      {% if dotazniky_nove %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Jméno</th>
+                <th scope="col">Provoz</th>
+                <th scope="col">Typ poměru</th>
+                <th scope="col">Vytvořeno</th>
+                <th scope="col">Akce</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in dotazniky_nove %}
+                <tr>
+                  <td>{{ d.id }}</td>
+                  <td>{{ d.jmeno }} {{ d.prijmeni }}</td>
+                  <td>{{ d.provoz }}</td>
+                  <td>{{ d.get_typ_pomeru_display|default:"" }}</td>
+                  <td>{{ d.created_at|date:"d.m.Y H:i" }}</td>
+                  <td>
+                    <a href="{% url 'frontend:dotaznik_detail_hr' d.id %}"
+                       class="btn btn-sm btn-outline-primary">
+                      Otevřít (HR detail)
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted mb-0 small">
+          Zatím žádné nové dotazníky z provozu čekající na HR.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- HR KONTROLUJE -->
+  <div class="card gth-card mb-3">
+    <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">Dotazníky v kontrole HR</h6>
+      <span class="badge bg-warning text-dark">{{ dotazniky_hr_kontroluje|length }}</span>
+    </div>
+    <div class="gth-card-body py-3">
+      {% if dotazniky_hr_kontroluje %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Jméno</th>
+                <th scope="col">Provoz</th>
+                <th scope="col">Typ poměru</th>
+                <th scope="col">Naposledy změněno</th>
+                <th scope="col">Stav</th>
+                <th scope="col">Akce</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in dotazniky_hr_kontroluje %}
+                <tr>
+                  <td>{{ d.id }}</td>
+                  <td>{{ d.jmeno }} {{ d.prijmeni }}</td>
+                  <td>{{ d.provoz }}</td>
+                  <td>{{ d.get_typ_pomeru_display|default:"" }}</td>
+                  <td>{{ d.updated_at|date:"d.m.Y H:i" }}</td>
+                  <td>
+                    <span class="badge bg-info">HR kontroluje</span>
+                  </td>
+                  <td>
+                    <a href="{% url 'frontend:dotaznik_detail_hr' d.id %}"
+                       class="btn btn-sm btn-outline-primary">
+                      Pokračovat v kontrole
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted mb-0 small">
+          Aktuálně nic v aktivní kontrole HR.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- SCHVÁLENÉ A VRÁCENÉ -->
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <div class="card gth-card h-100">
+        <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Schválené HR</h6>
+          <span class="badge bg-success">{{ dotazniky_schvalene|length }}</span>
+        </div>
+        <div class="gth-card-body py-3">
+          {% if dotazniky_schvalene %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Jméno</th>
+                    <th scope="col">Provoz</th>
+                    <th scope="col">Typ poměru</th>
+                    <th scope="col">Schváleno</th>
+                    <th scope="col">Akce</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for d in dotazniky_schvalene %}
+                    <tr>
+                      <td>{{ d.id }}</td>
+                      <td>{{ d.jmeno }} {{ d.prijmeni }}</td>
+                      <td>{{ d.provoz }}</td>
+                      <td>{{ d.get_typ_pomeru_display|default:"" }}</td>
+                      <td>{{ d.updated_at|date:"d.m.Y H:i" }}</td>
+                      <td>
+                        <a href="{% url 'frontend:dotaznik_detail_hr' d.id %}"
+                           class="btn btn-sm btn-outline-secondary">
+                          Zobrazit
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0 small">
+              Zatím žádné dotazníky označené jako schválené HR.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <div class="card gth-card h-100">
+        <div class="gth-card-header py-2 d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Vráceno provozu k doplnění</h6>
+          <span class="badge bg-secondary">{{ dotazniky_vracene_provozu|length }}</span>
+        </div>
+        <div class="gth-card-body py-3">
+          {% if dotazniky_vracene_provozu %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Jméno</th>
+                    <th scope="col">Provoz</th>
+                    <th scope="col">Typ poměru</th>
+                    <th scope="col">Vráceno</th>
+                    <th scope="col">Akce</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for d in dotazniky_vracene_provozu %}
+                    <tr>
+                      <td>{{ d.id }}</td>
+                      <td>{{ d.jmeno }} {{ d.prijmeni }}</td>
+                      <td>{{ d.provoz }}</td>
+                      <td>{{ d.get_typ_pomeru_display|default:"" }}</td>
+                      <td>{{ d.updated_at|date:"d.m.Y H:i" }}</td>
+                      <td>
+                        <a href="{% url 'frontend:dotaznik_detail_hr' d.id %}"
+                           class="btn btn-sm btn-outline-secondary">
+                          Zobrazit
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0 small">
+              Aktuálně nic vráceného na provoz.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

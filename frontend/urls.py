@@ -46,6 +46,17 @@ path(
 
     path("dotaznik/<int:dotaznik_id>/priloha/add/", views.priloha_add, name="priloha_add"),
     path("priloha/<int:priloha_id>/delete/", views.priloha_delete, name="priloha_delete"),
+    path("hr/dotaznik/<int:dotaznik_id>/", views.dotaznik_detail_hr, name="dotaznik_detail_hr"),
+    path("hr/dotaznik/<int:dotaznik_id>/generate-contract/", views.hr_generate_contract, name="hr_generate_contract"),
+path("hr/dotaznik/<int:dotaznik_id>/generate-wage/", views.hr_generate_wage_doc, name="hr_generate_wage_doc"),
+path("hr/dotaznik/<int:dotaznik_id>/schvalit/", views.hr_schvalit_dotaznik, name="hr_schvalit_dotaznik"),
+path("priloha/<int:priloha_id>/download/", views.priloha_download, name="priloha_download"),
+path("hr/dotaznik/<int:dotaznik_id>/vratit-provozu/",
+     views.hr_vratit_provozu,
+     name="hr_vratit_provozu"),
+
+
+
 
 
 ]
