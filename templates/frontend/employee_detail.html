@@ -129,10 +129,68 @@
               <h6 class="small text-muted mb-1">
                 <i class="fa fa-credit-card me-1"></i> Bankovní spojení
               </h6>
-              <p class="small mb-0">
+              <p class="small mb-2">
                 Číslo účtu: {{ dotaznik.cislo_uctu }} / {{ dotaznik.kod_banky }}<br>
                 {{ dotaznik.nazev_banky|default:"Název banky nevyplněn" }}
               </p>
+
+              {# NOVÁ SEKCE – Vygenerované dokumenty #}
+              <h6 class="small text-muted mb-1">
+                <i class="fa fa-file-text-o me-1"></i> Vygenerované dokumenty
+              </h6>
+              {% with dokumenty=dotaznik.dokumenty.all %}
+                {% if dokumenty %}
+                  <div class="table-responsive">
+                    <table class="table table-sm table-borderless align-middle mb-0 small">
+                      <thead>
+                        <tr class="text-muted">
+                          <th>Název</th>
+                          <th class="text-center" style="width: 50px;">DOCX</th>
+                          <th class="text-center" style="width: 50px;">PDF</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for doc in dokumenty %}
+                          <tr>
+                            <td>
+                              {{ doc.nazev|default:"Dokument" }}
+                              <span class="text-muted">
+                                ({{ doc.vygenerovano|date:"d.m.Y H:i" }})
+                              </span>
+                            </td>
+                            <td class="text-center">
+                              {% if doc.docx_soubor %}
+                                <a href="{{ doc.docx_soubor.url }}"
+                                   class="btn btn-outline-primary btn-xs"
+                                   title="Stáhnout DOCX">
+                                  <i class="fa fa-file-word-o"></i>
+                                </a>
+                              {% else %}
+                                <span class="text-muted">–</span>
+                              {% endif %}
+                            </td>
+                            <td class="text-center">
+                              {% if doc.pdf_soubor %}
+                                <a href="{{ doc.pdf_soubor.url }}"
+                                   class="btn btn-outline-danger btn-xs"
+                                   title="Stáhnout PDF">
+                                  <i class="fa fa-file-pdf-o"></i>
+                                </a>
+                              {% else %}
+                                <span class="text-muted">–</span>
+                              {% endif %}
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <p class="small mb-0 text-muted">
+                    Zatím žádné vygenerované dokumenty.
+                  </p>
+                {% endif %}
+              {% endwith %}
             </div>
           </div>
         </div>
@@ -168,7 +226,7 @@
                           {{ dotaznik.get_typ_pomeru_display|default:"-" }}
                         </dd>
 
-                        <dt class="col-6">Úvazek (FTE)</dt>
+                        <dt class="col-6">Úvazek (týdenní)</dt>
                         <dd class="col-6">
                           {{ dotaznik.uvazek_fte|default:"-" }}
                         </dd>

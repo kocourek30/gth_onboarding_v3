@@ -46,7 +46,7 @@ class Pozice(models.Model):
     kod = models.CharField(
         max_length=50,
         unique=True,
-        help_text="Strojový kód, např. KUCHAR, SEFKUCHAR, MANAZER_PROVOZU…",
+        help_text="Unikátní kód pro pozici (např. 'kuchar', 'servirka', 'manager').",
     )
 
     aktivni = models.BooleanField(default=True)

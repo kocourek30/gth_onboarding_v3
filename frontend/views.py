@@ -732,7 +732,7 @@ def provoz_contract_registry(request):
             | Q(pozice__nazev__icontains=search)
         )
 
-    KONCI_DO_DNI = 30
+    KONCI_DO_DNI = 100
     end_limit = today + timedelta(days=KONCI_DO_DNI)
 
     koncici_smlouvy = (
